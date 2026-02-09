@@ -1,0 +1,149 @@
+﻿@import url("mis_ventas.css");
+
+.breadcrumb {
+    margin-bottom: 12px;
+}
+
+.profile-main {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.2fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.profile-card {
+    background: #f1f1f1;
+    border: 1px solid #d5d5d5;
+    padding: 12px;
+}
+
+.organization {
+    border-left: 2px solid #b9b9b9;
+    padding-left: 14px;
+}
+
+.profile-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.profile-top .avatar {
+    width: 88px;
+    height: 88px;
+}
+
+.data-grid {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.data-grid label {
+    font-size: 16px;
+    color: #2d2d2d;
+}
+
+.value-line {
+    background: #84948b;
+    color: #fff;
+    padding: 7px 10px;
+    font-size: 16px;
+    font-weight: 700;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.small-gap {
+    gap: 4px;
+}
+
+.password label {
+    display: block;
+    font-size: 16px;
+    margin: 4px 0;
+}
+
+.password input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid #c8c8c8;
+    padding: 6px 10px;
+    background: #fff;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.areas {
+    display: flex;
+    gap: 26px;
+    margin: 2px 0 12px;
+    flex-wrap: wrap;
+}
+
+.areas label {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.action-btn {
+    width: 100%;
+    border: none;
+    border-radius: 18px;
+    background: #d0d0d0;
+    color: #111;
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: #c4c4c4;
+}
+
+@media (max-width: 1200px) {
+    .profile-main {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .organization {
+        grid-column: 1 / -1;
+        border-left: none;
+        border-top: 2px solid #b9b9b9;
+        padding-left: 12px;
+        padding-top: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-main {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .organization {
+        border-top: none;
+        padding-top: 12px;
+        padding-left: 12px;
+    }
+
+    .profile-top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .data-grid label,
+    .value-line,
+    .password label,
+    .password input,
+    .areas label,
+    .action-btn {
+        font-size: 14px;
+    }
+}

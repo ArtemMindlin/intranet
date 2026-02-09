@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comisiones - Panel Gerencia</title>
+    <link rel="stylesheet" href="{% static 'css/comisiones_gerencia.css' %}">
+</head>
+<body>
+    <div class="page">
+        <header class="top">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+            </div>
+
+            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                {% if foto_perfil_url %}
+                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                {% else %}
+                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="meta-row">{{ usuario_nombre }}</div>
+                    <div class="meta-row">{{ usuario_login }}</div>
+                    <div class="meta-row">{{ sede }}</div>
+                    <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                </div>
+            </a>
+        </header>
+
+        <nav class="nav nav-gerencia">
+            <a href="{% url 'comisiones_gerencia' %}" class="active">Comisiones</a>
+            <a href="{% url 'incidencias_gerencia' %}">Incidencias</a>
+        </nav>
+
+        <div class="breadcrumb">Comisiones >> Panel Gerencia</div>
+
+        <section class="manager-filters card">
+            <form class="manager-filters-grid" method="get">
+                <div class="field">
+                    <label for="desde">Desde</label>
+                    <input type="date" id="desde" name="desde" value="{{ fecha_desde }}">
+                </div>
+                <div class="field">
+                    <label for="hasta">Hasta</label>
+                    <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                </div>
+                <div class="field">
+                    <label for="instalacion">Instalación</label>
+                    <input type="text" id="instalacion" name="instalacion" value="{{ instalacion }}">
+                </div>
+                <div class="field">
+                    <label for="vendedor">Vendedor</label>
+                    <input type="text" id="vendedor" name="vendedor" value="{{ vendedor }}">
+                </div>
+                <div class="field field-submit">
+                    <button type="submit">Aplicar filtro</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="manager-tools">
+            <div class="actions-inline">
+                <div class="action"><span class="ok">✓</span>Validar comisiones</div>
+                <div class="action"><span class="warn">✕</span>Registrar incidencia</div>
+            </div>
+            <div class="pending-box">
+                <span>Incidencias ptes. revisión</span>
+                <strong>{{ pendientes_revision }}</strong>
+            </div>
+        </section>
+
+        <section class="manager-table-wrap">
+            <div class="table-wrap">
+                <table class="manager-table">
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Ventas / IDV</th>
+                            <th>Facturación</th>
+                            <th>Margen bruto</th>
+                            <th>Imp costo</th>
+                            <th>Comisión financiera</th>
+                            <th>Total beneficio</th>
+                            <th>Seguros</th>
+                            <th>Imp. comisión</th>
+                            <th>Estado comisión / tipo venta</th>
+                            <th>Tipo cliente</th>
+                            <th>Sel.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in filas_comision %}
+                        <tr>
+                            <td class="bold">{{ fila.matricula }}</td>
+                            <td class="center">{{ fila.ventas_idv }}</td>
+                            <td class="right">{{ fila.facturacion }}</td>
+                            <td class="right">{{ fila.margen_bruto }}</td>
+                            <td class="right">{{ fila.imp_costo }}</td>
+                            <td class="right">{{ fila.comision_financiera }}</td>
+                            <td class="right">{{ fila.total_beneficio }}</td>
+                            <td class="center">{{ fila.seguros }}</td>
+                            <td class="right">{{ fila.imp_comision }}</td>
+                            <td>{{ fila.estado }}</td>
+                            <td>{{ fila.tipo_cliente }}</td>
+                            <td class="center"><input type="checkbox" aria-label="Seleccionar fila"></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="12" class="center">No hay resultados para los filtros seleccionados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

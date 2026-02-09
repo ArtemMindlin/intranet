@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comisiones - Mis Ventas</title>
+    <link rel="stylesheet" href="{% static 'css/mis_ventas.css' %}">
+</head>
+<body>
+    <div class="page">
+        <header class="top">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+            </div>
+
+            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                {% if foto_perfil_url %}
+                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                {% else %}
+                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="meta-row">{{ usuario_nombre }}</div>
+                    <div class="meta-row">{{ usuario_login }}</div>
+                    <div class="meta-row">{{ sede }}</div>
+                    <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                </div>
+            </a>
+        </header>
+
+        <h1 class="page-title">Portal de incidencias</h1>
+
+        <nav class="nav">
+            <a href="{% url 'mis_ventas' %}" class="active">Mis Ventas</a>
+            <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
+        </nav>
+
+        <div class="breadcrumb"></div>
+        
+
+        <section class="summary">
+            <article class="kpi">
+                <div class="label">Total ventas periodo</div>
+                <div class="value">{{ total_ventas_periodo }}</div>
+            </article>
+
+            <article class="kpi">
+                <div class="label">Comisión aprobada por responsable</div>
+                <div class="value">{{ comision_aprobada_str }} €</div>
+            </article>
+
+            <aside class="actions">
+                <div class="action"><span class="ok">✓</span>Validar comisiones</div>
+                <div class="action"><span class="warn">✕</span>Registrar incidencia</div>
+            </aside>
+        </section>
+
+        <section class="content">
+            <form class="filters" method="get">
+                <h3>Filtro fecha</h3>
+                <div class="field">
+                    <label for="desde">Desde</label>
+                    <input type="date" id="desde" name="desde" value="{{ fecha_desde }}">
+                </div>
+                <div class="field">
+                    <label for="hasta">Hasta</label>
+                    <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                </div>
+                <div class="field">
+                    <button type="submit">Aplicar filtro</button>
+                </div>
+            </form>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Matricula</th>
+                            <th>IDV</th>
+                            <th>Tipo venta</th>
+                            <th>UD financiadas</th>
+                            <th>DNI</th>
+                            <th>Tipo cliente</th>
+                            <th>Nombre cliente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venta in ventas %}
+                        <tr>
+                            <td class="bold">{{ venta.matricula }}</td>
+                            <td class="center">{{ venta.idv }}</td>
+                            <td>{{ venta.tipo_venta }}</td>
+                            <td class="center">{{ venta.ud_financiadas }}</td>
+                            <td class="center">{{ venta.dni }}</td>
+                            <td class="center">{{ venta.tipo_cliente }}</td>
+                            <td>{{ venta.nombre_cliente }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="center">Sin ventas para el periodo seleccionado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

@@ -125,3 +125,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Para plantillas personalizadas
 TEMPLATES[0]['DIRS'] = [BASE_DIR / 'templates']
+
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/redirigir/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"

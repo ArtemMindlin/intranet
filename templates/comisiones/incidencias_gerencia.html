@@ -1,0 +1,116 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incidencias - Panel Gerencia</title>
+    <link rel="stylesheet" href="{% static 'css/comisiones_gerencia.css' %}">
+</head>
+<body>
+    <div class="page">
+        <header class="top">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+            </div>
+
+            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                {% if foto_perfil_url %}
+                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                {% else %}
+                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="meta-row">{{ usuario_nombre }}</div>
+                    <div class="meta-row">{{ usuario_login }}</div>
+                    <div class="meta-row">{{ sede }}</div>
+                    <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                </div>
+            </a>
+        </header>
+
+        <nav class="nav nav-gerencia">
+            <a href="{% url 'comisiones_gerencia' %}">Comisiones</a>
+            <a href="{% url 'incidencias_gerencia' %}" class="active">Incidencias</a>
+        </nav>
+
+        <div class="breadcrumb">Comisiones >> Incidencias Gerencia</div>
+
+        <section class="manager-filters card">
+            <form class="manager-filters-grid" method="get">
+                <div class="field">
+                    <label for="desde">Desde</label>
+                    <input type="date" id="desde" name="desde" value="{{ fecha_desde }}">
+                </div>
+                <div class="field">
+                    <label for="hasta">Hasta</label>
+                    <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                </div>
+                <div class="field">
+                    <label for="instalacion">Instalación</label>
+                    <input type="text" id="instalacion" name="instalacion" value="{{ instalacion }}">
+                </div>
+                <div class="field">
+                    <label for="vendedor">Vendedor</label>
+                    <input type="text" id="vendedor" name="vendedor" value="{{ vendedor }}">
+                </div>
+                <div class="field field-submit">
+                    <button type="submit">Aplicar filtro</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="manager-tools">
+            <div class="actions-inline">
+                <div class="action"><span class="ok">✓</span>Validar comisiones</div>
+                <div class="action"><span class="warn">✕</span>Registrar incidencia</div>
+            </div>
+            <div class="pending-box">
+                <span>Incidencias ptes. revisión</span>
+                <strong>{{ pendientes_revision }}</strong>
+            </div>
+        </section>
+
+        <section class="manager-table-wrap">
+            <div class="table-wrap">
+                <table class="manager-table manager-inc-table">
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Fecha incidencia</th>
+                            <th>Tipo incidencia</th>
+                            <th>Detalle incidencia</th>
+                            <th>Estado</th>
+                            <th>Validación</th>
+                            <th>Sel.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for incidencia in incidencias %}
+                        <tr>
+                            <td class="bold">{{ incidencia.matricula }}</td>
+                            <td class="center">{{ incidencia.fecha }}</td>
+                            <td>{{ incidencia.tipo }}</td>
+                            <td>{{ incidencia.detalle }}</td>
+                            <td class="center">{{ incidencia.estado }}</td>
+                            <td class="center">
+                                {% if incidencia.validacion_ok %}
+                                <span class="status ok">✓</span>
+                                {% else %}
+                                <span class="status muted">•</span>
+                                {% endif %}
+                            </td>
+                            <td class="center"><input type="checkbox" aria-label="Seleccionar incidencia"></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="center">No hay incidencias para los filtros seleccionados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
