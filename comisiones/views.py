@@ -13,7 +13,7 @@ from .models import Perfil
 def _es_gerencia(user):
     return (
         user.is_superuser
-        or user.groups.filter(name__in=["Gerente", "Director General"]).exists()
+        or user.groups.filter(name__in=["Gerente", "Director Comercial"]).exists()
     )
 
 
@@ -107,8 +107,8 @@ def mi_perfil(request):
 
 @login_required
 def comisiones_gerencia(request):
-    # if not _es_gerencia(request.user):
-    #     return redirect("redirigir_por_rol")
+    if not _es_gerencia(request.user):
+        return redirect("redirigir_por_rol")
 
     today = date.today()
     first_day = today.replace(day=1)
@@ -237,4 +237,3 @@ def redirigir_por_rol(request):
         return redirect("mis_ventas")
     if _es_gerencia(user):
         return redirect("comisiones_gerencia")
-    return redirect("comisiones_inicio")
