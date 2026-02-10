@@ -51,6 +51,7 @@ COMISION_APROBADA = f"{comision_aprobada:,}".replace(",", ".")
 
 INCIDENCIAS = [
     {
+        "empleado": "Rafael González",
         "matricula": "2127MXT",
         "fecha": "26/12/2025",
         "tipo": "Incidencia comisiones Diciembre",
@@ -59,6 +60,7 @@ INCIDENCIAS = [
         "validacion_ok": True,
     },
     {
+        "empleado": "Vicente Martínez",
         "matricula": "5869AEF",
         "fecha": "23/12/2025",
         "tipo": "Incidencia comisiones Diciembre",
@@ -67,6 +69,7 @@ INCIDENCIAS = [
         "validacion_ok": False,
     },
     {
+        "empleado": "Vicente Martínez",
         "matricula": "0422MXR",
         "fecha": "23/12/2025",
         "tipo": "Modificación vehículo",
@@ -75,6 +78,7 @@ INCIDENCIAS = [
         "validacion_ok": False,
     },
     {
+        "empleado": "Artem Mindlin",
         "matricula": "9178MXV",
         "fecha": "27/12/2025",
         "tipo": "Cambio estructura organizativa",

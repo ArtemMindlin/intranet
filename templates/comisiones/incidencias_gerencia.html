@@ -34,7 +34,7 @@
             <a href="{% url 'incidencias_gerencia' %}" class="active">Incidencias</a>
         </nav>
 
-        <div class="breadcrumb">Comisiones >> Incidencias Gerencia</div>
+        <div class="breadcrumb"></div>
 
         <section class="manager-filters card">
             <form class="manager-filters-grid" method="get">
@@ -76,10 +76,11 @@
                 <table class="manager-table manager-inc-table">
                     <thead>
                         <tr>
-                            <th>Matrícula</th>
+                            <th>Empleado / Matrícula</th>
                             <th>Fecha incidencia</th>
                             <th>Tipo incidencia</th>
                             <th>Detalle incidencia</th>
+                            <th>Detalle</th>
                             <th>Estado</th>
                             <th>Validación</th>
                             <th>Sel.</th>
@@ -88,23 +89,29 @@
                     <tbody>
                         {% for incidencia in incidencias %}
                         <tr>
-                            <td class="bold">{{ incidencia.matricula }}</td>
+                            <td>
+                                <div class="inc-person">{{ incidencia.empleado|default:"Sin asignar" }}</div>
+                                <div class="inc-matricula">{{ incidencia.matricula }}</div>
+                            </td>
                             <td class="center">{{ incidencia.fecha }}</td>
                             <td>{{ incidencia.tipo }}</td>
                             <td>{{ incidencia.detalle }}</td>
+                            <td class="center"><span class="pill">+</span></td>
                             <td class="center">{{ incidencia.estado }}</td>
                             <td class="center">
                                 {% if incidencia.validacion_ok %}
                                 <span class="status ok">✓</span>
+                                <span class="status no">✕</span>
                                 {% else %}
-                                <span class="status muted">•</span>
+                                <span class="status muted">✓</span>
+                                <span class="status muted">✕</span>
                                 {% endif %}
                             </td>
                             <td class="center"><input type="checkbox" aria-label="Seleccionar incidencia"></td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="center">No hay incidencias para los filtros seleccionados.</td>
+                            <td colspan="8" class="center">No hay incidencias para los filtros seleccionados.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
