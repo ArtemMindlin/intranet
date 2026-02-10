@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comisiones - Registrar Incidencia</title>
+    <link rel="stylesheet" href="{% static 'css/incidencias_personales.css' %}">
+</head>
+<body>
+    <div class="page">
+        <header class="top">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
+            </div>
+
+            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                {% if foto_perfil_url %}
+                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                {% else %}
+                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="meta-row">{{ usuario_nombre }}</div>
+                    <div class="meta-row">{{ usuario_login }}</div>
+                    <div class="meta-row">{{ sede }}</div>
+                    <div class="last-login">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                </div>
+            </a>
+        </header>
+
+        <h1 class="page-title">Portal de comisiones</h1>
+
+        <nav class="nav">
+            <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
+            <a href="{% url 'mis_incidencias' %}" class="active">Mis Incidencias</a>
+        </nav>
+
+        <div class="breadcrumb"></div>
+
+        <section class="inc-table-wrap">
+            {% if errores %}
+            <div class="form-errors">
+                {% for error in errores %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" class="reg-form">
+                {% csrf_token %}
+                <div class="detail-head-grid reg-head-grid">
+                    <article class="detail-field">
+                        <div class="detail-field-label">Fecha</div>
+                        <div class="card detail-kpi">
+                            <input
+                                class="reg-input center"
+                                type="date"
+                                name="fecha_incidencia"
+                                max="{% now 'Y-m-d' %}"
+                                value="{{ form_data.fecha_incidencia }}"
+                                required
+                            >
+                        </div>
+                    </article>
+                    <article class="detail-field">
+                        <div class="detail-field-label">Matricula</div>
+                        <div class="card detail-kpi">
+                            <select class="reg-input center" name="matricula" required>
+                                {% for matricula in matriculas_opciones %}
+                                <option value="{{ matricula }}" {% if form_data.matricula == matricula %}selected{% endif %}>{{ matricula }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </article>
+                    <article class="detail-field">
+                        <div class="detail-field-label">Tipo de incidencia</div>
+                        <div class="card detail-kpi">
+                            <input class="reg-input" type="text" name="tipo" value="{{ form_data.tipo }}" maxlength="150" required>
+                        </div>
+                    </article>
+                </div>
+
+                <h2 class="detail-section-label">Detalle</h2>
+                <article class="card detail-body">
+                    <textarea class="reg-textarea" name="detalle" required>{{ form_data.detalle }}</textarea>
+                </article>
+
+                <div class="reg-actions">
+                    <a class="reg-btn secondary" href="{% url 'mis_incidencias' %}">Cancelar</a>
+                    <button class="reg-btn primary" type="submit">Guardar incidencia</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</body>
+</html>

@@ -29,7 +29,7 @@
             </a>
         </header>
 
-        <h1 class="page-title">Portal de incidencias</h1>
+        <h1 class="page-title">Portal de comisiones</h1>
 
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}" class="active">Mis Ventas</a>
@@ -47,12 +47,18 @@
 
             <article class="kpi">
                 <div class="label">Comisión aprobada por responsable</div>
-                <div class="value">{{ comision_aprobada_str }} €</div>
+                <div class="value{% if not comision_aprobada_disponible %} value-empty{% endif %}"{% if not comision_aprobada_disponible %} style="background:#c45a5a;"{% endif %}>
+                    {% if comision_aprobada_disponible %}
+                    {{ comision_aprobada_str }} €
+                    {% else %}
+                    -- €
+                    {% endif %}
+                </div>
             </article>
 
             <aside class="actions">
                 <div class="action"><span class="ok">✓</span>Validar comisiones</div>
-                <div class="action"><span class="warn">✕</span>Registrar incidencia</div>
+                <a class="action" href="{% url 'registrar_incidencia' %}"><span class="warn">✕</span>Registrar incidencia</a>
             </aside>
         </section>
 
@@ -77,6 +83,7 @@
                     <thead>
                         <tr>
                             <th>Matricula</th>
+                            <th>Fecha</th>
                             <th>IDV</th>
                             <th>Tipo venta</th>
                             <th>UD financiadas</th>
@@ -89,16 +96,17 @@
                         {% for venta in ventas %}
                         <tr>
                             <td class="bold">{{ venta.matricula }}</td>
+                            <td class="center">{{ venta.fecha_venta|date:"d/m/Y" }}</td>
                             <td class="center">{{ venta.idv }}</td>
-                            <td>{{ venta.tipo_venta }}</td>
+                            <td>{{ venta.get_tipo_venta_display }}</td>
                             <td class="center">{{ venta.ud_financiadas }}</td>
                             <td class="center">{{ venta.dni }}</td>
-                            <td class="center">{{ venta.tipo_cliente }}</td>
+                            <td class="center">{{ venta.get_tipo_cliente_display }}</td>
                             <td>{{ venta.nombre_cliente }}</td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="center">Sin ventas para el periodo seleccionado.</td>
+                            <td colspan="8" class="center">Sin ventas para el periodo seleccionado.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

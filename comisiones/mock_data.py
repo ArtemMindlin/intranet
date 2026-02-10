@@ -46,8 +46,10 @@
         }
     ]
 
-comision_aprobada = 1325
-COMISION_APROBADA = f"{comision_aprobada:,}".replace(",", ".")
+comision_aprobada = 1223
+COMISION_APROBADA = (
+    "" if comision_aprobada is None else f"{comision_aprobada:,}".replace(",", ".")
+)
 
 INCIDENCIAS = [
     {
@@ -87,4 +89,3 @@ INCIDENCIAS = [
         "validacion_ok": False,
     },
 ]
-

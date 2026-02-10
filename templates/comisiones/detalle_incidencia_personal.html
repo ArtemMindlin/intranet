@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle Incidencia - Mis Incidencias</title>
+    <link rel="stylesheet" href="{% static 'css/incidencias_personales.css' %}">
+</head>
+<body>
+    <div class="page">
+        <header class="top">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
+            </div>
+
+            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                {% if foto_perfil_url %}
+                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                {% else %}
+                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="meta-row">{{ usuario_nombre }}</div>
+                    <div class="meta-row">{{ usuario_login }}</div>
+                    <div class="meta-row">{{ sede }}</div>
+                    <div class="last-login">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                </div>
+            </a>
+        </header>
+
+        <h1 class="page-title">Portal de comisiones</h1>
+
+        <nav class="nav">
+            <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
+            <a href="{% url 'mis_incidencias' %}" class="active">Mis Incidencias</a>
+        </nav>
+
+        <div class="breadcrumb"></div>
+
+        <section class="inc-table-wrap">
+            <div class="detail-head-grid">
+                <article class="detail-field">
+                    <div class="detail-field-label">Fecha</div>
+                    <div class="card detail-kpi">
+                        <strong>{{ incidencia.fecha_incidencia|date:"d/m/Y" }}</strong>
+                    </div>
+                </article>
+                <article class="detail-field">
+                    <div class="detail-field-label">Matricula</div>
+                    <div class="card detail-kpi">
+                        <strong>{{ incidencia.matricula_display }}</strong>
+                    </div>
+                </article>
+                <article class="detail-field">
+                    <div class="detail-field-label">Tipo de incidencia</div>
+                    <div class="card detail-kpi">
+                        <strong>{{ incidencia.tipo }}</strong>
+                    </div>
+                </article>
+                <article class="detail-field">
+                    <div class="detail-field-label">Estado</div>
+                    <div class="card detail-kpi">
+                        <strong>{{ incidencia.get_estado_display }}</strong>
+                    </div>
+                </article>
+            </div>
+
+            <h2 class="detail-section-label">Detalle</h2>
+            <article class="card detail-body">
+                <div class="detail-text">{{ incidencia.detalle|safe|linebreaksbr }}</div>
+            </article>
+
+            <div class="detail-nav">
+                {% if anterior_id %}
+                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' anterior_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}" aria-label="Incidencia anterior">&#9664;</a>
+                {% else %}
+                <span class="nav-arrow disabled" aria-disabled="true">&#9664;</span>
+                {% endif %}
+
+                <span class="nav-counter">
+                    {% if posicion_actual %}
+                    {{ posicion_actual }} / {{ total_incidencias }}
+                    {% else %}
+                    0 / {{ total_incidencias }}
+                    {% endif %}
+                </span>
+
+                {% if siguiente_id %}
+                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' siguiente_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}" aria-label="Incidencia siguiente">&#9654;</a>
+                {% else %}
+                <span class="nav-arrow disabled" aria-disabled="true">&#9654;</span>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</body>
+</html>

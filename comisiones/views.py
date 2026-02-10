@@ -1,13 +1,17 @@
 ﻿from calendar import monthrange
 from datetime import date
 
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.db.models import Q, Sum
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 # Datos mockeados para mostrar en la plantilla. En un entorno real, estos datos se obtendrían de una consulta a SQL Server.
-from .mock_data import VENTAS, COMISION_APROBADA, INCIDENCIAS
-from .models import Perfil
+from .mock_data import INCIDENCIAS
+from .models import Comision, Incidencia, Perfil, Venta
 
 
 def _es_gerencia(user):
@@ -27,6 +31,15 @@ def _contexto_base_usuario(request, perfil):
     }
 
 
+def _parse_iso_date(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 # @login_required
 # def inicio(request):
 #     return HttpResponse("Bienvenido a la sección de Comisiones")
@@ -39,13 +52,31 @@ def mis_ventas(request):
     first_day = today.replace(day=1)
     last_day = today.replace(day=monthrange(today.year, today.month)[1])
 
-    # Si el usuario ha proporcionado fechas en la consulta, las usamos; de lo contrario, usamos el rango del mes actual.
-    fecha_desde = request.GET.get("desde") or first_day.strftime("%Y-%m-%d")
-    fecha_hasta = request.GET.get("hasta") or last_day.strftime("%Y-%m-%d")
+    fecha_desde_param = request.GET.get("desde")
+    fecha_hasta_param = request.GET.get("hasta")
+    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
+    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
+    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
+    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
 
-    # Datos mockeados
-    ventas = VENTAS
-    comision_aprobada = COMISION_APROBADA
+    ventas_qs = Venta.objects.filter(
+        usuario=request.user,
+        fecha_venta__range=(fecha_desde_date, fecha_hasta_date),
+    ).order_by("-fecha_venta", "-id")
+    ventas = list(ventas_qs)
+    total_comision_aprobada = (
+        Comision.objects.filter(venta__in=ventas_qs, estado="aprobada").aggregate(
+            total=Sum("monto")
+        )["total"]
+    )
+    comision_aprobada = (
+        f"{total_comision_aprobada:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        if total_comision_aprobada is not None
+        else ""
+    )
+    comision_aprobada_disponible = (
+        comision_aprobada is not None and bool(str(comision_aprobada).strip())
+    )
 
     # Garantiza perfil para usuarios antiguos que se crearon antes de esta lógica.
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
@@ -58,6 +89,7 @@ def mis_ventas(request):
         "fecha_hasta": fecha_hasta,
         "total_ventas_periodo": len(ventas),
         "comision_aprobada_str": comision_aprobada,
+        "comision_aprobada_disponible": comision_aprobada_disponible,
         "ventas": ventas,
     }
 
@@ -70,10 +102,17 @@ def mis_incidencias(request):
     first_day = today.replace(day=1)
     last_day = today.replace(day=monthrange(today.year, today.month)[1])
 
-    fecha_desde = request.GET.get("desde") or first_day.strftime("%Y-%m-%d")
-    fecha_hasta = request.GET.get("hasta") or last_day.strftime("%Y-%m-%d")
+    fecha_desde_param = request.GET.get("desde")
+    fecha_hasta_param = request.GET.get("hasta")
+    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
+    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
+    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
+    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
-    incidencias = INCIDENCIAS
+    incidencias = Incidencia.objects.filter(
+        reportado_por=request.user,
+        fecha_incidencia__range=(fecha_desde_date, fecha_hasta_date),
+    ).prefetch_related("ventas")
 
     context = {
         **_contexto_base_usuario(request, perfil),
@@ -83,6 +122,134 @@ def mis_incidencias(request):
         "incidencias": incidencias,
     }
     return render(request, "comisiones/incidencias_personales.html", context)
+
+
+@login_required
+def registrar_incidencia(request):
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    ventas_usuario = list(
+        Venta.objects.filter(usuario=request.user).order_by("-fecha_venta", "-id")
+    )
+
+    matriculas_disponibles = []
+    matriculas_seen = set()
+    for venta in ventas_usuario:
+        if venta.matricula not in matriculas_seen:
+            matriculas_disponibles.append(venta.matricula)
+            matriculas_seen.add(venta.matricula)
+    matriculas_opciones = ["GENERAL", *matriculas_disponibles]
+
+    form_data = {
+        "fecha_incidencia": date.today().strftime("%Y-%m-%d"),
+        "matricula": "GENERAL",
+        "tipo": "",
+        "detalle": "",
+    }
+    errores = []
+
+    if request.method == "POST":
+        form_data = {
+            "fecha_incidencia": request.POST.get("fecha_incidencia", "").strip(),
+            "matricula": request.POST.get("matricula", "").strip(),
+            "tipo": request.POST.get("tipo", "").strip(),
+            "detalle": request.POST.get("detalle", "").strip(),
+        }
+
+        fecha = _parse_iso_date(form_data["fecha_incidencia"])
+        if not fecha:
+            errores.append("La fecha de incidencia no es válida.")
+        elif fecha > date.today():
+            errores.append("La fecha de incidencia no puede estar en el futuro.")
+
+        if form_data["matricula"] not in matriculas_opciones:
+            errores.append("Debes seleccionar una matrícula de tus ventas.")
+
+        if not form_data["tipo"]:
+            errores.append("El tipo de incidencia es obligatorio.")
+
+        if not form_data["detalle"]:
+            errores.append("El detalle de incidencia es obligatorio.")
+
+        if not errores:
+            incidencia = Incidencia.objects.create(
+                reportado_por=request.user,
+                es_general=form_data["matricula"] == "GENERAL",
+                fecha_incidencia=fecha,
+                tipo=form_data["tipo"],
+                detalle=form_data["detalle"],
+                estado="pte_revision",
+                validacion_ok=False,
+            )
+            if form_data["matricula"] != "GENERAL":
+                ventas_matricula = Venta.objects.filter(
+                    usuario=request.user, matricula=form_data["matricula"]
+                )
+                incidencia.ventas.set(ventas_matricula)
+            return redirect("mis_incidencias")
+
+    context = {
+        **_contexto_base_usuario(request, perfil),
+        "form_data": form_data,
+        "matriculas_disponibles": matriculas_disponibles,
+        "matriculas_opciones": matriculas_opciones,
+        "errores": errores,
+    }
+    return render(request, "comisiones/registrar_incidencia.html", context)
+
+
+@login_required
+def detalle_incidencia_personal(request, incidencia_id):
+    today = date.today()
+    first_day = today.replace(day=1)
+    last_day = today.replace(day=monthrange(today.year, today.month)[1])
+
+    fecha_desde_param = request.GET.get("desde")
+    fecha_hasta_param = request.GET.get("hasta")
+    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
+    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
+    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
+    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
+
+    incidencias_filtradas = list(
+        Incidencia.objects.filter(
+            reportado_por=request.user,
+            fecha_incidencia__range=(fecha_desde_date, fecha_hasta_date),
+        )
+        .prefetch_related("ventas")
+        .order_by("-fecha_incidencia", "-id")
+    )
+    incidencia_ids = [inc.id for inc in incidencias_filtradas]
+
+    incidencia = get_object_or_404(
+        Incidencia.objects.prefetch_related("ventas"),
+        id=incidencia_id,
+        reportado_por=request.user,
+    )
+
+    anterior_id = None
+    siguiente_id = None
+    posicion_actual = None
+    total_incidencias = len(incidencia_ids)
+    if incidencia.id in incidencia_ids:
+        idx = incidencia_ids.index(incidencia.id)
+        posicion_actual = idx + 1
+        if idx > 0:
+            anterior_id = incidencia_ids[idx - 1]
+        if idx < len(incidencia_ids) - 1:
+            siguiente_id = incidencia_ids[idx + 1]
+
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    context = {
+        **_contexto_base_usuario(request, perfil),
+        "fecha_desde": fecha_desde,
+        "fecha_hasta": fecha_hasta,
+        "incidencia": incidencia,
+        "anterior_id": anterior_id,
+        "siguiente_id": siguiente_id,
+        "posicion_actual": posicion_actual,
+        "total_incidencias": total_incidencias,
+    }
+    return render(request, "comisiones/detalle_incidencia_personal.html", context)
 
 
 @login_required
@@ -106,6 +273,40 @@ def mi_perfil(request):
 
 
 @login_required
+def restablecer_contrasenya(request):
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    errores = []
+
+    if request.method == "POST":
+        password_actual = request.POST.get("password_actual", "")
+        password_nueva = request.POST.get("password_nueva", "")
+
+        if not request.user.check_password(password_actual):
+            errores.append("La contraseña actual no es correcta.")
+
+        if not password_nueva:
+            errores.append("La nueva contraseña es obligatoria.")
+
+        if not errores:
+            try:
+                validate_password(password_nueva, user=request.user)
+            except ValidationError as exc:
+                errores.extend(exc.messages)
+
+        if not errores:
+            request.user.set_password(password_nueva)
+            request.user.save(update_fields=["password"])
+            update_session_auth_hash(request, request.user)
+            return redirect("mi_perfil")
+
+    context = {
+        **_contexto_base_usuario(request, perfil),
+        "errores": errores,
+    }
+    return render(request, "comisiones/restablecer_contrasenya.html", context)
+
+
+@login_required
 def comisiones_gerencia(request):
     if not _es_gerencia(request.user):
         return redirect("redirigir_por_rol")
@@ -113,80 +314,52 @@ def comisiones_gerencia(request):
     today = date.today()
     first_day = today.replace(day=1)
     last_day = today.replace(day=monthrange(today.year, today.month)[1])
-    fecha_desde = request.GET.get("desde") or first_day.strftime("%Y-%m-%d")
-    fecha_hasta = request.GET.get("hasta") or last_day.strftime("%Y-%m-%d")
+    fecha_desde_param = request.GET.get("desde")
+    fecha_hasta_param = request.GET.get("hasta")
+    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
+    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
+    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
+    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
     instalacion = request.GET.get("instalacion", "2901: Nissan Orihuela")
     vendedor = request.GET.get("vendedor", "Todos")
 
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
 
-    filas = [
-        {
-            "matricula": "2127MXT",
-            "ventas_idv": "2398695",
-            "facturacion": "31.448,76 €",
-            "margen_bruto": "1.083,57 €",
-            "imp_costo": "38.021,72 €",
-            "comision_financiera": "307,50 €",
-            "total_beneficio": "1.083,57 €",
-            "seguros": "2",
-            "imp_comision": "450 €",
-            "estado": "VENTA DETALL EXENTA",
-            "tipo_cliente": "CIF (FLOTAS)",
-        },
-        {
-            "matricula": "0453MXZ",
-            "ventas_idv": "2412606",
-            "facturacion": "22.205,71 €",
-            "margen_bruto": "1.694,88 €",
-            "imp_costo": "27.669,93 €",
-            "comision_financiera": "307,50 €",
-            "total_beneficio": "977,35 €",
-            "seguros": "",
-            "imp_comision": "225 €",
-            "estado": "VENTA RENTING",
-            "tipo_cliente": "CIF (FLOTAS)",
-        },
-        {
-            "matricula": "0422MXR",
-            "ventas_idv": "2442228",
-            "facturacion": "32.144,62 €",
-            "margen_bruto": "2.723,34 €",
-            "imp_costo": "32.117,36 €",
-            "comision_financiera": "- €",
-            "total_beneficio": "1.168,08 €",
-            "seguros": "",
-            "imp_comision": "500 €",
-            "estado": "VENTA DETALL PARTICULAR",
-            "tipo_cliente": "NIF (PARTICULAR)",
-        },
-        {
-            "matricula": "1084MXR",
-            "ventas_idv": "2440829",
-            "facturacion": "17.375,75 €",
-            "margen_bruto": "-45,58 €",
-            "imp_costo": "18.482,95 €",
-            "comision_financiera": "- €",
-            "total_beneficio": "100,15 €",
-            "seguros": "",
-            "imp_comision": "0 €",
-            "estado": "VENTA DETALL PARTICULAR",
-            "tipo_cliente": "NIF (PARTICULAR)",
-        },
-        {
-            "matricula": "9178MXV",
-            "ventas_idv": "2446855",
-            "facturacion": "13.916,5 €",
-            "margen_bruto": "583,56 €",
-            "imp_costo": "13.332,94 €",
-            "comision_financiera": "- €",
-            "total_beneficio": "858,34 €",
-            "seguros": "",
-            "imp_comision": "150 €",
-            "estado": "VENTA DETALL PARTICULAR",
-            "tipo_cliente": "NIF (PARTICULAR)",
-        },
-    ]
+    ventas_qs = Venta.objects.filter(
+        fecha_venta__range=(fecha_desde_date, fecha_hasta_date)
+    ).select_related("usuario")
+
+    vendedor_val = (vendedor or "").strip()
+    if vendedor_val and vendedor_val.lower() != "todos":
+        ventas_qs = ventas_qs.filter(
+            Q(usuario__username__icontains=vendedor_val)
+            | Q(usuario__first_name__icontains=vendedor_val)
+            | Q(usuario__last_name__icontains=vendedor_val)
+            | Q(matricula__icontains=vendedor_val)
+        )
+
+    filas = []
+    for venta in ventas_qs.order_by("-fecha_venta", "-id"):
+        nombre_empleado = (
+            venta.usuario.get_full_name().strip()
+            if venta.usuario
+            else ""
+        ) or (venta.usuario.username if venta.usuario else "Sin empleado")
+        filas.append(
+            {
+                "empleado_matricula": f"{nombre_empleado} / {venta.matricula}",
+                "ventas_idv": str(venta.idv),
+                "facturacion": "-",
+                "margen_bruto": "-",
+                "imp_costo": "-",
+                "comision_financiera": "-",
+                "total_beneficio": "-",
+                "seguros": "-",
+                "imp_comision": "-",
+                "estado": venta.get_tipo_venta_display(),
+                "tipo_cliente": venta.get_tipo_cliente_display(),
+            }
+        )
 
     context = {
         **_contexto_base_usuario(request, perfil),

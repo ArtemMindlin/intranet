@@ -16,7 +16,7 @@
 
         </header>
 
-         <h1 class="page-title">Portal de incidencias</h1>
+         <h1 class="page-title">Portal de comisiones</h1>
 
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
@@ -25,7 +25,7 @@
 
         <div class="breadcrumb"></div>
 
-        <section class="profile-main">
+        <section class="profile-main profile-main-compact">
             <article class="profile-card personal">
                 <div class="profile-top">
                     {% if foto_perfil_url %}
@@ -34,6 +34,12 @@
                     <div class="avatar">{{ usuario_nombre|first|upper }}</div>
                     {% endif %}
                     <p class="last-login">Última conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</p>
+                    <form class="logout-form" method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'login' %}">
+                        <button class="logout-btn" type="submit">Cerrar sesión</button>
+                        <a class="logout-btn" href="{% url 'restablecer_contrasenya' %}">Restablecer contraseña</a>
+                    </form>
                 </div>
 
                 <div class="data-grid">
@@ -54,16 +60,6 @@
                 </div>
 
                 <button class="action-btn" type="button">Guardar datos</button>
-            </article>
-
-            <article class="profile-card password">
-                <label for="pass_actual">Contraseña actual</label>
-                <input id="pass_actual" type="password" value="">
-
-                <label for="pass_nueva">Nueva contraseña</label>
-                <input id="pass_nueva" type="password" value="">
-
-                <button class="action-btn" type="button">Restablecer contraseña</button>
             </article>
 
             <article class="profile-card organization">

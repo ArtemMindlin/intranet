@@ -29,7 +29,7 @@
             </a>
         </header>
 
-        <h1 class="page-title">Portal de </h1>
+        <h1 class="page-title">Portal de comisiones</h1>
 
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
@@ -65,33 +65,29 @@
                             <th>Detalle incidencia</th>
                             <th>Detalle</th>
                             <th>Estado</th>
-                            <th>Validación</th>
-                            <th>Sel.</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for incidencia in incidencias %}
                         <tr>
-                            <td>{{ incidencia.matricula }}</td>
-                            <td class="center">{{ incidencia.fecha }}</td>
+                            <td>{{ incidencia.matricula_display }}</td>
+                            <td class="center">{{ incidencia.fecha_incidencia|date:"d/m/Y" }}</td>
                             <td>{{ incidencia.tipo }}</td>
                             <td>{{ incidencia.detalle }}</td>
-                            <td class="center"><span class="pill">+</span></td>
-                            <td class="center">{{ incidencia.estado }}</td>
                             <td class="center">
-                                {% if incidencia.validacion_ok %}
-                                <span class="status ok">✓</span>
-                                <span class="status no">✕</span>
-                                {% else %}
-                                <span class="status muted">✓</span>
-                                <span class="status muted">✕</span>
-                                {% endif %}
+                                <a
+                                    class="pill-link"
+                                    href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}"
+                                    aria-label="Ver detalle de incidencia"
+                                >
+                                    <span class="pill">+</span>
+                                </a>
                             </td>
-                            <td class="center"><input type="checkbox" aria-label="Seleccionar incidencia"></td>
+                            <td class="center">{{ incidencia.get_estado_display }}</td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="center">No hay incidencias para los filtros seleccionados.</td>
+                            <td colspan="6" class="center">No hay incidencias para los filtros seleccionados.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

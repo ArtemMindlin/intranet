@@ -63,7 +63,7 @@
         <section class="manager-tools">
             <div class="actions-inline">
                 <div class="action"><span class="ok">✓</span>Validar comisiones</div>
-                <div class="action"><span class="warn">✕</span>Registrar incidencia</div>
+                <a class="action" href="{% url 'registrar_incidencia' %}"><span class="warn">✕</span>Registrar incidencia</a>
             </div>
             <div class="pending-box">
                 <span>Incidencias ptes. revisión</span>
@@ -76,7 +76,7 @@
                 <table class="manager-table">
                     <thead>
                         <tr>
-                            <th>Matrícula</th>
+                            <th>Empleado / Matrícula</th>
                             <th>Ventas / IDV</th>
                             <th>Facturación</th>
                             <th>Margen bruto</th>
@@ -93,7 +93,7 @@
                     <tbody>
                         {% for fila in filas_comision %}
                         <tr>
-                            <td class="bold">{{ fila.matricula }}</td>
+                            <td class="bold">{{ fila.empleado_matricula }}</td>
                             <td class="center">{{ fila.ventas_idv }}</td>
                             <td class="right">{{ fila.facturacion }}</td>
                             <td class="right">{{ fila.margen_bruto }}</td>

@@ -62,6 +62,11 @@
     align-items: center;
 }
 
+.actions-inline .action {
+    text-decoration: none;
+    color: inherit;
+}
+
 .pending-box {
     display: flex;
     align-items: center;
