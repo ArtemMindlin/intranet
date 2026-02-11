@@ -59,6 +59,12 @@ body {
     justify-self: end;
 }
 
+.user-panel {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+}
+
 .user-block-link {
     text-decoration: none;
     color: inherit;
@@ -67,6 +73,26 @@ body {
 
 .user-block-link:hover {
     border-color: #b8b8b8;
+}
+
+.header-logout-form {
+    margin: 0;
+}
+
+.header-logout-btn {
+    border: none;
+    border-radius: 16px;
+    background: #d0d0d0;
+    color: #111;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.header-logout-btn:hover {
+    background: #c4c4c4;
 }
 
 .avatar {
@@ -258,7 +284,8 @@ body {
     color: #3b3b3b;
 }
 
-.field input {
+.field input,
+.field select {
     width: 100%;
     padding: 8px;
     border: 1px solid #c8c8c8;
@@ -336,6 +363,17 @@ td.bold {
         max-width: 520px;
     }
 
+    .user-panel {
+        justify-self: stretch;
+        width: 100%;
+        max-width: 520px;
+        justify-items: stretch;
+    }
+
+    .header-logout-btn {
+        width: 100%;
+    }
+
     .brand-logo {
         max-width: 220px;
     }
@@ -388,7 +426,8 @@ td.bold {
 
     .field label,
     .field button,
-    .field input {
+    .field input,
+    .field select {
         font-size: 14px;
     }
 

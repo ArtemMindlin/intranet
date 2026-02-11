@@ -38,7 +38,6 @@
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'login' %}">
                         <button class="logout-btn" type="submit">Cerrar sesión</button>
-                        <a class="logout-btn" href="{% url 'restablecer_contrasenya' %}">Restablecer contraseña</a>
                     </form>
                 </div>
 

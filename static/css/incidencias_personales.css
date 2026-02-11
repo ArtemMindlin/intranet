@@ -11,7 +11,7 @@
 
 .inc-filters-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
     align-items: end;
 }
@@ -47,6 +47,11 @@
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
+}
+
+.inc-filters .field-submit {
+    justify-self: start;
+    min-width: 180px;
 }
 
 .inc-table-wrap {
@@ -281,11 +286,11 @@
 
 @media (max-width: 1200px) {
     .inc-filters-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .field-submit {
-        grid-column: 1 / -1;
+        grid-column: auto;
     }
 
     .detail-head-grid {
@@ -317,6 +322,8 @@
 
     .field-submit {
         grid-column: auto;
+        justify-self: stretch;
+        min-width: 0;
     }
 
     .inc-table {

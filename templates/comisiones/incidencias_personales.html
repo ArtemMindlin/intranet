@@ -14,19 +14,26 @@
                 <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
             </div>
 
-            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
-                {% if foto_perfil_url %}
-                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
-                {% else %}
-                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
-                {% endif %}
-                <div>
-                    <div class="meta-row">{{ usuario_nombre }}</div>
-                    <div class="meta-row">{{ usuario_login }}</div>
-                    <div class="meta-row">{{ sede }}</div>
-                    <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
-                </div>
-            </a>
+            <div class="user-panel">
+                <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                    {% if foto_perfil_url %}
+                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                    {% else %}
+                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="meta-row">{{ usuario_nombre }}</div>
+                        <div class="meta-row">{{ usuario_login }}</div>
+                        <div class="meta-row">{{ sede }}</div>
+                        <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </a>
+                <form class="header-logout-form" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'login' %}">
+                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                </form>
+            </div>
         </header>
 
         <h1 class="page-title">Portal de comisiones</h1>
@@ -47,6 +54,24 @@
                 <div class="field">
                     <label for="hasta">Hasta</label>
                     <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                </div>
+                <div class="field">
+                    <label for="matricula">Matrícula</label>
+                    <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
+                    <datalist id="matricula-opciones">
+                        {% for opcion in matriculas_opciones %}
+                        <option value="{{ opcion }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="field">
+                    <label for="estado">Estado</label>
+                    <select id="estado" name="estado">
+                        <option value="">Todos</option>
+                        {% for opcion in estado_opciones %}
+                        <option value="{{ opcion.value }}" {% if filtros.estado == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="field field-submit">
                     <button type="submit">Aplicar filtro</button>
@@ -77,7 +102,7 @@
                             <td class="center">
                                 <a
                                     class="pill-link"
-                                    href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}"
+                                    href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}"
                                     aria-label="Ver detalle de incidencia"
                                 >
                                     <span class="pill">+</span>
@@ -95,5 +120,24 @@
             </div>
         </section>
     </div>
+    <script>
+        (function () {
+            const desde = document.getElementById("desde");
+            const hasta = document.getElementById("hasta");
+            if (!desde || !hasta) return;
+
+            function syncDateLimits() {
+                hasta.min = desde.value || "";
+                desde.max = hasta.value || "";
+                if (desde.value && hasta.value && hasta.value < desde.value) {
+                    hasta.value = desde.value;
+                }
+            }
+
+            desde.addEventListener("change", syncDateLimits);
+            hasta.addEventListener("change", syncDateLimits);
+            syncDateLimits();
+        })();
+    </script>
 </body>
 </html>

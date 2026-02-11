@@ -49,6 +49,15 @@ class Comision(models.Model):
 
     venta = models.ForeignKey("Venta", on_delete=models.CASCADE)
     monto = models.DecimalField(max_digits=10, decimal_places=2)
+    facturacion = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    margen_bruto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    imp_costo = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    comision_financiera = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    total_beneficio = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    seguros = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    imp_comision = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     ESTADOS = [
         ("pendiente", "Pendiente"),
         ("aprobada", "Aprobada"),

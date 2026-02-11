@@ -14,19 +14,26 @@
                 <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
             </div>
 
-            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
-                {% if foto_perfil_url %}
-                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
-                {% else %}
-                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
-                {% endif %}
-                <div>
-                    <div class="meta-row">{{ usuario_nombre }}</div>
-                    <div class="meta-row">{{ usuario_login }}</div>
-                    <div class="meta-row">{{ sede }}</div>
-                    <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
-                </div>
-            </a>
+            <div class="user-panel">
+                <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                    {% if foto_perfil_url %}
+                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                    {% else %}
+                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="meta-row">{{ usuario_nombre }}</div>
+                        <div class="meta-row">{{ usuario_login }}</div>
+                        <div class="meta-row">{{ sede }}</div>
+                        <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </a>
+                <form class="header-logout-form" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'login' %}">
+                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                </form>
+            </div>
         </header>
 
         <h1 class="page-title">Portal de comisiones</h1>
@@ -64,7 +71,7 @@
 
         <section class="content">
             <form class="filters" method="get">
-                <h3>Filtro fecha</h3>
+                <h3>Filtros</h3>
                 <div class="field">
                     <label for="desde">Desde</label>
                     <input type="date" id="desde" name="desde" value="{{ fecha_desde }}">
@@ -72,6 +79,60 @@
                 <div class="field">
                     <label for="hasta">Hasta</label>
                     <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                </div>
+                <div class="field">
+                    <label for="matricula">Matrícula</label>
+                    <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
+                    <datalist id="matricula-opciones">
+                        {% for opcion in matriculas_opciones %}
+                        <option value="{{ opcion }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="field">
+                    <label for="idv">IDV</label>
+                    <input id="idv" name="idv" list="idv-opciones" value="{{ filtros.idv }}" autocomplete="off">
+                    <datalist id="idv-opciones">
+                        {% for opcion in idv_opciones %}
+                        <option value="{{ opcion }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="field">
+                    <label for="tipo_venta">Tipo venta</label>
+                    <input id="tipo_venta" name="tipo_venta" list="tipo-venta-opciones" value="{{ filtros.tipo_venta }}" autocomplete="off">
+                    <datalist id="tipo-venta-opciones">
+                        {% for opcion in tipo_venta_opciones %}
+                        <option value="{{ opcion.value }}">{{ opcion.label }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="field">
+                    <label for="dni">DNI</label>
+                    <input id="dni" name="dni" list="dni-opciones" value="{{ filtros.dni }}" autocomplete="off">
+                    <datalist id="dni-opciones">
+                        {% for opcion in dni_opciones %}
+                        <option value="{{ opcion }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="field">
+                    <label for="tipo_cliente">Tipo de cliente</label>
+                    <select id="tipo_cliente" name="tipo_cliente">
+                        <option value="">Todos</option>
+                        {% for opcion in tipo_cliente_opciones %}
+                        <option value="{{ opcion.value }}" {% if filtros.tipo_cliente == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="nombre_cliente">Nombre de cliente</label>
+                    <input id="nombre_cliente" name="nombre_cliente" list="nombre-cliente-opciones" value="{{ filtros.nombre_cliente }}" autocomplete="off">
+                    <datalist id="nombre-cliente-opciones">
+                        {% for opcion in nombre_cliente_opciones %}
+                        <option value="{{ opcion }}"></option>
+                        {% endfor %}
+                    </datalist>
                 </div>
                 <div class="field">
                     <button type="submit">Aplicar filtro</button>
@@ -114,5 +175,24 @@
             </div>
         </section>
     </div>
+<script>
+    (function () {
+        const desde = document.getElementById("desde");
+        const hasta = document.getElementById("hasta");
+        if (!desde || !hasta) return;
+
+        function syncDateLimits() {
+            hasta.min = desde.value || "";
+            desde.max = hasta.value || "";
+            if (desde.value && hasta.value && hasta.value < desde.value) {
+                hasta.value = desde.value;
+            }
+        }
+
+        desde.addEventListener("change", syncDateLimits);
+        hasta.addEventListener("change", syncDateLimits);
+        syncDateLimits();
+    })();
+</script>
 </body>
 </html>

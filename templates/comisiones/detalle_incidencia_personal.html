@@ -14,19 +14,26 @@
                 <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
             </div>
 
-            <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
-                {% if foto_perfil_url %}
-                <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
-                {% else %}
-                <div class="avatar">{{ usuario_nombre|first|upper }}</div>
-                {% endif %}
-                <div>
-                    <div class="meta-row">{{ usuario_nombre }}</div>
-                    <div class="meta-row">{{ usuario_login }}</div>
-                    <div class="meta-row">{{ sede }}</div>
-                    <div class="last-login">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
-                </div>
-            </a>
+            <div class="user-panel">
+                <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                    {% if foto_perfil_url %}
+                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                    {% else %}
+                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="meta-row">{{ usuario_nombre }}</div>
+                        <div class="meta-row">{{ usuario_login }}</div>
+                        <div class="meta-row">{{ sede }}</div>
+                        <div class="last-login">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </a>
+                <form class="header-logout-form" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'login' %}">
+                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                </form>
+            </div>
         </header>
 
         <h1 class="page-title">Portal de comisiones</h1>
@@ -73,7 +80,7 @@
 
             <div class="detail-nav">
                 {% if anterior_id %}
-                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' anterior_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}" aria-label="Incidencia anterior">&#9664;</a>
+                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' anterior_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}" aria-label="Incidencia anterior">&#9664;</a>
                 {% else %}
                 <span class="nav-arrow disabled" aria-disabled="true">&#9664;</span>
                 {% endif %}
@@ -87,7 +94,7 @@
                 </span>
 
                 {% if siguiente_id %}
-                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' siguiente_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}" aria-label="Incidencia siguiente">&#9654;</a>
+                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' siguiente_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}" aria-label="Incidencia siguiente">&#9654;</a>
                 {% else %}
                 <span class="nav-arrow disabled" aria-disabled="true">&#9654;</span>
                 {% endif %}

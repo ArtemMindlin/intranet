@@ -23,43 +23,6 @@
     padding: 12px;
 }
 
-.reset-card {
-    max-width: 520px;
-    margin: 0 auto;
-}
-
-.reset-main {
-    display: block;
-}
-
-.reset-card label {
-    display: block;
-    font-size: 17px;
-    margin: 8px 0 6px;
-}
-
-.reset-card input {
-    width: 100%;
-    height: 36px;
-    border: 1px solid #c8c8c8;
-    padding: 6px 10px;
-    background: #fff;
-    margin-bottom: 12px;
-    font-size: 15px;
-}
-
-.reset-errors {
-    margin-bottom: 10px;
-    border: 1px solid #d9b2b2;
-    background: #f6e1e1;
-    color: #6c2c2c;
-    padding: 8px 10px;
-}
-
-.reset-errors p {
-    margin: 2px 0;
-}
-
 .organization {
     border-left: 2px solid #b9b9b9;
     padding-left: 14px;
@@ -93,10 +56,6 @@
 
 .logout-btn:hover {
     background: #c4c4c4;
-}
-
-.logout-form .logout-btn + .logout-btn {
-    margin-top: 8px;
 }
 
 .profile-top .avatar {

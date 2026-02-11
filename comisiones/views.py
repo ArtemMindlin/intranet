@@ -1,10 +1,7 @@
 ﻿from calendar import monthrange
 from datetime import date
 
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -47,22 +44,94 @@ def _parse_iso_date(value):
 
 @login_required
 def mis_ventas(request):
-    # Obtienemos las fechas de inicio y fin del mes actual para mostrar un rango por defecto.
-    today = date.today()
-    first_day = today.replace(day=1)
-    last_day = today.replace(day=monthrange(today.year, today.month)[1])
+
+    def _unique_non_empty(values):
+        seen = set()
+        result = []
+        for value in values:
+            if value in (None, ""):
+                continue
+            if value in seen:
+                continue
+            seen.add(value)
+            result.append(value)
+        return result
 
     fecha_desde_param = request.GET.get("desde")
     fecha_hasta_param = request.GET.get("hasta")
-    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
-    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
-    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
-    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
+    fecha_desde_date = _parse_iso_date(fecha_desde_param)
+    fecha_hasta_date = _parse_iso_date(fecha_hasta_param)
 
-    ventas_qs = Venta.objects.filter(
-        usuario=request.user,
-        fecha_venta__range=(fecha_desde_date, fecha_hasta_date),
-    ).order_by("-fecha_venta", "-id")
+    if fecha_desde_date and fecha_hasta_date and fecha_hasta_date < fecha_desde_date:
+        fecha_hasta_date = fecha_desde_date
+
+    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d") if fecha_desde_date else ""
+    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d") if fecha_hasta_date else ""
+
+    ventas_periodo_qs = Venta.objects.filter(usuario=request.user)
+    if fecha_desde_date:
+        ventas_periodo_qs = ventas_periodo_qs.filter(fecha_venta__gte=fecha_desde_date)
+    if fecha_hasta_date:
+        ventas_periodo_qs = ventas_periodo_qs.filter(fecha_venta__lte=fecha_hasta_date)
+    ventas_periodo_qs = ventas_periodo_qs.order_by("-fecha_venta", "-id")
+    ventas_periodo = list(ventas_periodo_qs)
+
+    matriculas_opciones = _unique_non_empty(venta.matricula for venta in ventas_periodo)
+    idv_opciones = _unique_non_empty(str(venta.idv) for venta in ventas_periodo)
+    tipo_venta_codes = _unique_non_empty(venta.tipo_venta for venta in ventas_periodo)
+    dni_opciones = _unique_non_empty(venta.dni for venta in ventas_periodo)
+    tipo_cliente_codes = _unique_non_empty(
+        venta.tipo_cliente for venta in ventas_periodo
+    )
+    nombre_cliente_opciones = _unique_non_empty(
+        venta.nombre_cliente for venta in ventas_periodo
+    )
+
+    tipo_venta_dict = dict(Venta.TIPO_VENTA_CHOICES)
+    tipo_cliente_dict = dict(Venta.TIPO_CLIENTE_CHOICES)
+    tipo_venta_opciones = [
+        {"value": code, "label": tipo_venta_dict.get(code, code)}
+        for code in tipo_venta_codes
+    ]
+    tipo_cliente_opciones = [
+        {"value": code, "label": tipo_cliente_dict.get(code, code)}
+        for code in tipo_cliente_codes
+    ]
+
+    filtros = {
+        "matricula": request.GET.get("matricula", "").strip(),
+        "idv": request.GET.get("idv", "").strip(),
+        "tipo_venta": request.GET.get("tipo_venta", "").strip(),
+        "dni": request.GET.get("dni", "").strip(),
+        "tipo_cliente": request.GET.get("tipo_cliente", "").strip(),
+        "nombre_cliente": request.GET.get("nombre_cliente", "").strip(),
+    }
+
+    ventas_qs = ventas_periodo_qs
+
+    if filtros["matricula"]:
+        ventas_qs = ventas_qs.filter(matricula__icontains=filtros["matricula"])
+
+    if filtros["idv"]:
+        if filtros["idv"].isdigit():
+            ventas_qs = ventas_qs.filter(idv=int(filtros["idv"]))
+        else:
+            ventas_qs = ventas_qs.none()
+
+    if filtros["tipo_venta"]:
+        ventas_qs = ventas_qs.filter(tipo_venta__iexact=filtros["tipo_venta"])
+
+    if filtros["dni"]:
+        ventas_qs = ventas_qs.filter(dni__icontains=filtros["dni"])
+
+    if filtros["tipo_cliente"]:
+        ventas_qs = ventas_qs.filter(tipo_cliente__iexact=filtros["tipo_cliente"])
+
+    if filtros["nombre_cliente"]:
+        ventas_qs = ventas_qs.filter(
+            nombre_cliente__icontains=filtros["nombre_cliente"]
+        )
+
     ventas = list(ventas_qs)
     total_comision_aprobada = (
         Comision.objects.filter(venta__in=ventas_qs, estado="aprobada").aggregate(
@@ -91,6 +160,13 @@ def mis_ventas(request):
         "comision_aprobada_str": comision_aprobada,
         "comision_aprobada_disponible": comision_aprobada_disponible,
         "ventas": ventas,
+        "filtros": filtros,
+        "matriculas_opciones": matriculas_opciones,
+        "idv_opciones": idv_opciones,
+        "tipo_venta_opciones": tipo_venta_opciones,
+        "dni_opciones": dni_opciones,
+        "tipo_cliente_opciones": tipo_cliente_opciones,
+        "nombre_cliente_opciones": nombre_cliente_opciones,
     }
 
     return render(request, "comisiones/mis_ventas.html", context)
@@ -98,21 +174,80 @@ def mis_ventas(request):
 
 @login_required
 def mis_incidencias(request):
-    today = date.today()
-    first_day = today.replace(day=1)
-    last_day = today.replace(day=monthrange(today.year, today.month)[1])
+
+    def _unique_non_empty(values):
+        seen = set()
+        result = []
+        for value in values:
+            if value in (None, ""):
+                continue
+            if value in seen:
+                continue
+            seen.add(value)
+            result.append(value)
+        return result
 
     fecha_desde_param = request.GET.get("desde")
     fecha_hasta_param = request.GET.get("hasta")
-    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
-    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
-    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
-    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
+    fecha_desde_date = _parse_iso_date(fecha_desde_param)
+    fecha_hasta_date = _parse_iso_date(fecha_hasta_param)
+    if fecha_desde_date and fecha_hasta_date and fecha_hasta_date < fecha_desde_date:
+        fecha_hasta_date = fecha_desde_date
+
+    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d") if fecha_desde_date else ""
+    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d") if fecha_hasta_date else ""
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
-    incidencias = Incidencia.objects.filter(
-        reportado_por=request.user,
-        fecha_incidencia__range=(fecha_desde_date, fecha_hasta_date),
-    ).prefetch_related("ventas")
+    incidencias_periodo_qs = Incidencia.objects.filter(reportado_por=request.user)
+    if fecha_desde_date:
+        incidencias_periodo_qs = incidencias_periodo_qs.filter(
+            fecha_incidencia__gte=fecha_desde_date
+        )
+    if fecha_hasta_date:
+        incidencias_periodo_qs = incidencias_periodo_qs.filter(
+            fecha_incidencia__lte=fecha_hasta_date
+        )
+    incidencias_periodo_qs = incidencias_periodo_qs.prefetch_related("ventas")
+    incidencias_periodo = list(incidencias_periodo_qs)
+
+    matriculas_opciones = []
+    matriculas_seen = set()
+    for incidencia in incidencias_periodo:
+        if incidencia.es_general and "GENERAL" not in matriculas_seen:
+            matriculas_opciones.append("GENERAL")
+            matriculas_seen.add("GENERAL")
+            continue
+        for venta in incidencia.ventas.all():
+            if venta.matricula in matriculas_seen:
+                continue
+            matriculas_opciones.append(venta.matricula)
+            matriculas_seen.add(venta.matricula)
+
+    estado_codes = _unique_non_empty(
+        incidencia.estado for incidencia in incidencias_periodo
+    )
+    estado_dict = dict(Incidencia.ESTADOS)
+    estado_opciones = [
+        {"value": code, "label": estado_dict.get(code, code)} for code in estado_codes
+    ]
+
+    filtros = {
+        "matricula": request.GET.get("matricula", "").strip(),
+        "estado": request.GET.get("estado", "").strip(),
+    }
+
+    incidencias = incidencias_periodo_qs
+
+    if filtros["matricula"]:
+        matricula_val = filtros["matricula"]
+        condicion_matricula = Q(ventas__matricula__icontains=matricula_val)
+        if "general" in matricula_val.lower():
+            condicion_matricula |= Q(es_general=True)
+        incidencias = incidencias.filter(condicion_matricula).distinct()
+
+    if filtros["estado"] in estado_codes:
+        incidencias = incidencias.filter(estado=filtros["estado"])
+    else:
+        filtros["estado"] = ""
 
     context = {
         **_contexto_base_usuario(request, perfil),
@@ -120,6 +255,9 @@ def mis_incidencias(request):
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
         "incidencias": incidencias,
+        "filtros": filtros,
+        "matriculas_opciones": matriculas_opciones,
+        "estado_opciones": estado_opciones,
     }
     return render(request, "comisiones/incidencias_personales.html", context)
 
@@ -199,24 +337,40 @@ def registrar_incidencia(request):
 
 @login_required
 def detalle_incidencia_personal(request, incidencia_id):
-    today = date.today()
-    first_day = today.replace(day=1)
-    last_day = today.replace(day=monthrange(today.year, today.month)[1])
-
     fecha_desde_param = request.GET.get("desde")
     fecha_hasta_param = request.GET.get("hasta")
-    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
-    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
-    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
-    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
+    fecha_desde_date = _parse_iso_date(fecha_desde_param)
+    fecha_hasta_date = _parse_iso_date(fecha_hasta_param)
+    if fecha_desde_date and fecha_hasta_date and fecha_hasta_date < fecha_desde_date:
+        fecha_hasta_date = fecha_desde_date
+    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d") if fecha_desde_date else ""
+    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d") if fecha_hasta_date else ""
+
+    filtros = {
+        "matricula": request.GET.get("matricula", "").strip(),
+        "estado": request.GET.get("estado", "").strip(),
+    }
+
+    incidencias_qs = Incidencia.objects.filter(reportado_por=request.user)
+    if fecha_desde_date:
+        incidencias_qs = incidencias_qs.filter(fecha_incidencia__gte=fecha_desde_date)
+    if fecha_hasta_date:
+        incidencias_qs = incidencias_qs.filter(fecha_incidencia__lte=fecha_hasta_date)
+
+    if filtros["matricula"]:
+        condicion_matricula = Q(ventas__matricula__icontains=filtros["matricula"])
+        if "general" in filtros["matricula"].lower():
+            condicion_matricula |= Q(es_general=True)
+        incidencias_qs = incidencias_qs.filter(condicion_matricula).distinct()
+
+    estados_validos = {code for code, _ in Incidencia.ESTADOS}
+    if filtros["estado"] in estados_validos:
+        incidencias_qs = incidencias_qs.filter(estado=filtros["estado"])
+    else:
+        filtros["estado"] = ""
 
     incidencias_filtradas = list(
-        Incidencia.objects.filter(
-            reportado_por=request.user,
-            fecha_incidencia__range=(fecha_desde_date, fecha_hasta_date),
-        )
-        .prefetch_related("ventas")
-        .order_by("-fecha_incidencia", "-id")
+        incidencias_qs.prefetch_related("ventas").order_by("-fecha_incidencia", "-id")
     )
     incidencia_ids = [inc.id for inc in incidencias_filtradas]
 
@@ -248,6 +402,7 @@ def detalle_incidencia_personal(request, incidencia_id):
         "siguiente_id": siguiente_id,
         "posicion_actual": posicion_actual,
         "total_incidencias": total_incidencias,
+        "filtros": filtros,
     }
     return render(request, "comisiones/detalle_incidencia_personal.html", context)
 
@@ -270,40 +425,6 @@ def mi_perfil(request):
         "responsable_vo": "Damián Rech",
     }
     return render(request, "comisiones/mi_perfil.html", context)
-
-
-@login_required
-def restablecer_contrasenya(request):
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
-    errores = []
-
-    if request.method == "POST":
-        password_actual = request.POST.get("password_actual", "")
-        password_nueva = request.POST.get("password_nueva", "")
-
-        if not request.user.check_password(password_actual):
-            errores.append("La contraseña actual no es correcta.")
-
-        if not password_nueva:
-            errores.append("La nueva contraseña es obligatoria.")
-
-        if not errores:
-            try:
-                validate_password(password_nueva, user=request.user)
-            except ValidationError as exc:
-                errores.extend(exc.messages)
-
-        if not errores:
-            request.user.set_password(password_nueva)
-            request.user.save(update_fields=["password"])
-            update_session_auth_hash(request, request.user)
-            return redirect("mi_perfil")
-
-    context = {
-        **_contexto_base_usuario(request, perfil),
-        "errores": errores,
-    }
-    return render(request, "comisiones/restablecer_contrasenya.html", context)
 
 
 @login_required
