@@ -1,4 +1,4 @@
-# 🤝 Guía de Contribución — GM Neologic
+# 🤝 Guía de Contribución
 
 Este documento describe las normas básicas de trabajo dentro del repositorio para mantener un flujo de desarrollo claro, seguro y consistente entre todos los miembros del equipo.
 
