@@ -22,6 +22,7 @@ from django.conf.urls.static import static
 import comisiones.views
 
 urlpatterns = [
+    # Django redirige a la página de login por defecto cuando se accede a la raíz del sitio aunque no se haya especificado una URL para ello.
     path("", auth_views.LoginView.as_view(), name="root_login"),
     path("admin/", admin.site.urls),
     path("comisiones/", include("comisiones.urls")),
