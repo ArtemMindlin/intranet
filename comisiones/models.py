@@ -111,6 +111,7 @@ class Incidencia(models.Model):
 class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     sede = models.CharField(max_length=100, blank=True, default="")
+    ha_visto_perfil_inicial = models.BooleanField(default=False)
     jefe_ventas = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
