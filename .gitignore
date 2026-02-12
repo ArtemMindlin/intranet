@@ -3,3 +3,9 @@ venv/
 .venv/
 env/
 .env/
+
+# Carpetas __pycache__ en cualquier nivel del proyecto
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
