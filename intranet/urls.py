@@ -1,33 +1,28 @@
-"""
-URL configuration for intranet project.
+"""Enrutamiento principal del proyecto intranet.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+Este modulo centraliza las rutas globales (admin y autenticacion) y delega
+las rutas funcionales al modulo `comisiones`.
 """
-from django.contrib import admin
-from django.contrib.auth import views as auth_views
-from django.urls import path, include
+
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.contrib.auth import views as auth_views
+from django.urls import include, path
+
 import comisiones.views
 
 urlpatterns = [
-    # Django redirige a la página de login por defecto cuando se accede a la raíz del sitio aunque no se haya especificado una URL para ello.
+    # Entrada raiz del sitio: muestra el formulario de inicio de sesion.
     path("", auth_views.LoginView.as_view(), name="root_login"),
+    # Panel de administracion nativo de Django.
     path("admin/", admin.site.urls),
+    # Espacio de rutas de la aplicacion de negocio.
     path("comisiones/", include("comisiones.urls")),
+    # Endpoints de autenticacion.
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
+    # Redireccion posterior al login segun el rol del usuario.
     path(
         "redirigir/",
         comisiones.views.redirigir_por_rol,
@@ -36,4 +31,5 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    # En desarrollo, Django sirve archivos de MEDIA de forma local.
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
