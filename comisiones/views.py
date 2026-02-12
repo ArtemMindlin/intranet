@@ -410,6 +410,10 @@ def detalle_incidencia_personal(request, incidencia_id):
 @login_required
 def mi_perfil(request):
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    if not perfil.ha_visto_perfil_inicial:
+        perfil.ha_visto_perfil_inicial = True
+        perfil.save(update_fields=["ha_visto_perfil_inicial"])
+
     context = {
         **_contexto_base_usuario(request, perfil),
         "ultima_conexion": request.user.last_login,
@@ -528,6 +532,11 @@ def redirigir_por_rol(request):
     user = request.user
 
     if user.groups.filter(name__in=["Vendedor", "Jefe de ventas"]).exists():
+        perfil, _ = Perfil.objects.get_or_create(user=user)
+        if not perfil.ha_visto_perfil_inicial:
+            return redirect("mi_perfil")
         return redirect("mis_ventas")
     if _es_gerencia(user):
         return redirect("comisiones_gerencia")
+
+    return redirect("mis_ventas")
