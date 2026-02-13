@@ -10,7 +10,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
-import comisiones.views
+from comisiones.views import redirigir_por_rol
 
 urlpatterns = [
     # Entrada raiz del sitio: muestra el formulario de inicio de sesion.
@@ -25,7 +25,7 @@ urlpatterns = [
     # Redireccion posterior al login segun el rol del usuario.
     path(
         "redirigir/",
-        comisiones.views.redirigir_por_rol,
+        redirigir_por_rol,
         name="redirigir_por_rol",
     ),
 ]

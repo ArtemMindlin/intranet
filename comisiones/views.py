@@ -527,4 +527,4 @@ def redirigir_por_rol(request):
 
     if user.groups.filter(name__in=["Vendedor", "Jefe de ventas"]).exists():
         return redirect("mis_ventas")
-    return redirect("login")
+    return redirect("comisiones_gerencia")
