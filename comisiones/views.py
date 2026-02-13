@@ -36,12 +36,6 @@ def _parse_iso_date(value):
     except ValueError:
         return None
 
-
-# @login_required
-# def inicio(request):
-#     return HttpResponse("Bienvenido a la sección de Comisiones")
-
-
 @login_required
 def mis_ventas(request):
 
@@ -532,11 +526,5 @@ def redirigir_por_rol(request):
     user = request.user
 
     if user.groups.filter(name__in=["Vendedor", "Jefe de ventas"]).exists():
-        perfil, _ = Perfil.objects.get_or_create(user=user)
-        if not perfil.ha_visto_perfil_inicial:
-            return redirect("mi_perfil")
         return redirect("mis_ventas")
-    if _es_gerencia(user):
-        return redirect("comisiones_gerencia")
-
-    return redirect("mis_ventas")
+    return redirect("comisiones_gerencia")

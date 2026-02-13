@@ -8,12 +8,13 @@ Aplicacion web interna construida con Django para gestionar ventas, comisiones e
 3. [Arquitectura del proyecto](#arquitectura-del-proyecto)
 4. [Modelo de datos](#modelo-de-datos)
 5. [Puesta en marcha local](#puesta-en-marcha-local)
-6. [Configuracion y entornos](#configuracion-y-entornos)
-7. [Flujos por rol](#flujos-por-rol)
-8. [Rutas principales](#rutas-principales)
-9. [Calidad, estado actual y limitaciones](#calidad-estado-actual-y-limitaciones)
-10. [Contribucion](#contribucion)
-11. [Licencia](#licencia)
+6. [Datos demo reproducibles (seed)](#datos-demo-reproducibles-seed)
+7. [Configuracion y entornos](#configuracion-y-entornos)
+8. [Flujos por rol](#flujos-por-rol)
+9. [Rutas principales](#rutas-principales)
+10. [Calidad, estado actual y limitaciones](#calidad-estado-actual-y-limitaciones)
+11. [Contribucion](#contribucion)
+12. [Licencia](#licencia)
 
 ## Resumen funcional
 El sistema permite:
@@ -85,8 +86,16 @@ El script `iniciar_intranet.bat` hace este flujo automaticamente:
 3. Activa el entorno virtual.
 4. Instala dependencias de `requirements.txt`.
 5. Aplica migraciones.
-6. Pregunta si quieres crear superusuario.
-7. Abre `http://127.0.0.1:8000/` y ejecuta el servidor.
+6. Ejecuta `python manage.py seed` si la BD esta vacia.
+7. Pregunta si quieres crear superusuario.
+8. Abre `http://127.0.0.1:8000/` y ejecuta el servidor.
+
+Para forzar seed en cualquier momento:
+
+```powershell
+set SEED=1
+.\iniciar_intranet.bat
+```
 
 ### Opcion manual (Windows/Linux/macOS)
 #### 1) Clonar y entrar al proyecto
@@ -132,6 +141,50 @@ Acceso local:
 
 - Aplicacion: `http://127.0.0.1:8000/`
 - Admin Django: `http://127.0.0.1:8000/admin/`
+
+## Datos demo reproducibles (seed)
+Este proyecto incluye un management command para poblar datos de ejemplo sin depender de subir SQLite al repositorio.
+
+Comando base:
+
+```bash
+python manage.py seed
+```
+
+Opciones disponibles:
+
+- `--n-ventas`: numero de ventas demo a crear (default: `30`).
+- `--n-incidencias`: numero de incidencias demo a crear (default: `10`).
+- `--reset`: borra ventas/comisiones/incidencias y regenera datos demo.
+
+Ejemplos:
+
+```bash
+python manage.py seed --n-ventas 50 --n-incidencias 20
+python manage.py seed --reset
+```
+
+Comportamiento de idempotencia:
+
+- Si ya existen ventas o incidencias, `seed` no duplica datos y se omite.
+- Si quieres regenerar desde cero, usa `--reset`.
+
+Datos demo creados:
+
+- Grupos de permisos (`Vendedor`, `Jefe de ventas`, `Gerente`, `Director Comercial`).
+- Usuarios demo con perfiles y jerarquia organizativa.
+- Ventas y comisiones con fechas recientes e importes plausibles.
+- Incidencias asociadas a ventas (o generales).
+
+Credenciales demo por defecto:
+
+- Usuario: `vendedor_1_demo`
+- Password: `Demo12345!`
+
+Notas de repositorio:
+
+- `db.sqlite3` y `*.sqlite3` estan excluidos en `.gitignore`.
+- Cada clon puede reconstruir su BD local con migraciones + seed.
 
 ## Configuracion y entornos
 Configuracion activa:
