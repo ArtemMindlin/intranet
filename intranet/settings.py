@@ -46,6 +46,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'comisiones.middleware.SessionIdleTimeoutMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -129,3 +130,9 @@ TEMPLATES[0]['DIRS'] = [BASE_DIR / 'templates']
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/redirigir/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+# Tiempo maximo de inactividad para cerrar sesion automaticamente.
+SESSION_IDLE_TIMEOUT_MINUTES = 15
+SESSION_IDLE_TIMEOUT_SECONDS = SESSION_IDLE_TIMEOUT_MINUTES * 60
+# Mantiene coherencia entre caducidad de cookie y timeout configurado.
+SESSION_COOKIE_AGE = SESSION_IDLE_TIMEOUT_SECONDS
