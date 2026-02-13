@@ -8,6 +8,7 @@ env/
 
 # Carpetas __pycache__ en cualquier nivel del proyecto
 __pycache__/
+*.py[cod]
 *.pyc
 *.pyo
 *.pyd

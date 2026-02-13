@@ -9,9 +9,10 @@ set "ACTIVATE_BAT="
 set "PYTHON_EXE="
 set "PORT=8000"
 set "HOST=127.0.0.1"
+set "RUN_SEED=0"
 
 echo.
-echo [1/7] Verificando Python...
+echo [1/8] Verificando Python...
 where python >nul 2>nul
 if errorlevel 1 (
     echo No se encontro Python en PATH.
@@ -20,7 +21,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/7] Verificando entorno virtual...
+echo [2/8] Verificando entorno virtual...
 if exist "venv\Scripts\activate.bat" (
     set "VENV_DIR=venv"
 ) else if exist ".venv\Scripts\activate.bat" (
@@ -39,7 +40,7 @@ set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
 echo Entorno virtual seleccionado: %VENV_DIR%
 
 echo.
-echo [3/7] Activando entorno virtual...
+echo [3/8] Activando entorno virtual...
 call "%ACTIVATE_BAT%"
 if errorlevel 1 (
     echo Error al activar el entorno virtual.
@@ -47,7 +48,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [4/7] Instalando dependencias...
+echo [4/8] Instalando dependencias...
 if not exist "requirements.txt" (
     echo No se encontro requirements.txt en %CD%.
     exit /b 1
@@ -59,7 +60,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [5/7] Aplicando migraciones...
+echo [5/8] Aplicando migraciones...
 "%PYTHON_EXE%" manage.py migrate
 if errorlevel 1 (
     echo Error aplicando migraciones.
@@ -67,6 +68,37 @@ if errorlevel 1 (
 )
 
 echo.
+echo [6/8] Verificando si ejecutar seed...
+if /I "%SEED%"=="1" (
+    set "RUN_SEED=1"
+    echo SEED=1 detectado: se ejecutara seed de forma forzada.
+) else (
+    if not exist "db.sqlite3" (
+        set "RUN_SEED=1"
+        echo db.sqlite3 no existe: se ejecutara seed.
+    ) else (
+        "%PYTHON_EXE%" manage.py shell -c "from comisiones.models import Venta, Incidencia; import sys; sys.exit(0 if (Venta.objects.exists() or Incidencia.objects.exists()) else 1)"
+        if errorlevel 1 (
+            set "RUN_SEED=1"
+            echo Base de datos vacia: se ejecutara seed.
+        ) else (
+            echo Base de datos con datos: seed omitido.
+        )
+    )
+)
+
+if "%RUN_SEED%"=="1" (
+    echo.
+    echo Ejecutando seed demo...
+    "%PYTHON_EXE%" manage.py seed
+    if errorlevel 1 (
+        echo Error ejecutando seed.
+        exit /b 1
+    )
+)
+
+echo.
+echo [7/8] Opcional - crear superusuario
 choice /C SN /N /M "Deseas crear un superusuario ahora? (S/N): "
 if errorlevel 2 goto skip_superuser
 if errorlevel 1 (
@@ -81,7 +113,7 @@ if errorlevel 1 (
 
 :skip_superuser
 echo.
-echo [6/6] Abriendo navegador y ejecutando servidor...
+echo [8/8] Abriendo navegador y ejecutando servidor...
 start "" "http://%HOST%:%PORT%/"
 echo Servidor disponible en: http://%HOST%:%PORT%/
 echo.

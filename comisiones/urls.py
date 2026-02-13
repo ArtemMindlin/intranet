@@ -11,22 +11,22 @@ from . import views
 
 urlpatterns = [
     # Vista principal para gerencia (resumen de comisiones).
+    # Temporalmente desactivada.
     # path("", views.comisiones_gerencia, name="comisiones_gerencia"),
-    # Vistas del comercial.
+    # Vista activa del comercial.
     path("mis_ventas/", views.mis_ventas, name="mis_ventas"),
-    path("mis_incidencias/", views.mis_incidencias, name="mis_incidencias"),
-    # Registro de una nueva incidencia.
-    path(
-        "registrar_incidencia/", views.registrar_incidencia, name="registrar_incidencia"
-    ),
-    # Detalle de una incidencia concreta del usuario autenticado.
-    path(
-        "mis_incidencias/<int:incidencia_id>/",
-        views.detalle_incidencia_personal,
-        name="detalle_incidencia_personal",
-    ),
-    # Perfil del usuario autenticado.
-    path("mi_perfil/", views.mi_perfil, name="mi_perfil"),
-    # Gestion de incidencias para gerencia.
-    path("incidencias/", views.incidencias_gerencia, name="incidencias_gerencia"),
+    # Vistas temporalmente desactivadas.
+    # path("mis_incidencias/", views.mis_incidencias, name="mis_incidencias"),
+    # path(
+    #     "registrar_incidencia/",
+    #     views.registrar_incidencia,
+    #     name="registrar_incidencia",
+    # ),
+    # path(
+    #     "mis_incidencias/<int:incidencia_id>/",
+    #     views.detalle_incidencia_personal,
+    #     name="detalle_incidencia_personal",
+    # ),
+    # path("mi_perfil/", views.mi_perfil, name="mi_perfil"),
+    # path("incidencias/", views.incidencias_gerencia, name="incidencias_gerencia"),
 ]
