@@ -71,13 +71,31 @@ Relaciones relevantes:
 - `Perfil.user` -> `auth.User` (OneToOne).
 
 ## Puesta en marcha local
-### 1) Clonar y entrar al proyecto
+### Opcion rapida en Windows (script .bat)
+Si estas en Windows, puedes preparar y arrancar el proyecto con:
+
+```powershell
+.\iniciar_intranet.bat
+```
+
+El script `iniciar_intranet.bat` hace este flujo automaticamente:
+
+1. Verifica `python` en `PATH`.
+2. Usa `venv` (o `.venv` si existe); si no existe ninguno, crea `venv`.
+3. Activa el entorno virtual.
+4. Instala dependencias de `requirements.txt`.
+5. Aplica migraciones.
+6. Pregunta si quieres crear superusuario.
+7. Abre `http://127.0.0.1:8000/` y ejecuta el servidor.
+
+### Opcion manual (Windows/Linux/macOS)
+#### 1) Clonar y entrar al proyecto
 ```bash
 git clone <url-del-repositorio>
 cd intranet
 ```
 
-### 2) Crear entorno virtual
+#### 2) Crear entorno virtual
 Windows (PowerShell):
 ```powershell
 python -m venv .venv
@@ -90,22 +108,22 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3) Instalar dependencias
+#### 3) Instalar dependencias
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4) Aplicar migraciones
+#### 4) Aplicar migraciones
 ```bash
 python manage.py migrate
 ```
 
-### 5) Crear usuario administrador
+#### 5) Crear usuario administrador
 ```bash
 python manage.py createsuperuser
 ```
 
-### 6) Ejecutar servidor de desarrollo
+#### 6) Ejecutar servidor de desarrollo
 ```bash
 python manage.py runserver
 ```
