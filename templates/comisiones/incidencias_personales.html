@@ -44,6 +44,13 @@
         </nav>
 
         <div class="breadcrumb"></div>
+        {% if messages %}
+        <section class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </section>
+        {% endif %}
 
         <section class="inc-filters card">
             <form method="get" class="inc-filters-grid">

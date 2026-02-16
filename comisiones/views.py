@@ -1,7 +1,11 @@
 ﻿from calendar import monthrange
 from datetime import date
+import logging
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.mail import send_mail
 from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -9,6 +13,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 # Datos mockeados para mostrar en la plantilla. En un entorno real, estos datos se obtendrían de una consulta a SQL Server.
 from .mock_data import INCIDENCIAS
 from .models import Comision, Incidencia, Perfil, Venta
+
+logger = logging.getLogger(__name__)
+DESTINATARIO_PRUEBA_INCIDENCIAS = "artem.mindlin@marcosautomocion.com"
 
 
 def _es_gerencia(user):
@@ -97,6 +104,50 @@ def _resolve_month_range(
     fecha_desde_date = _year_month_bounds(desde_ym)[0] if desde_ym else None
     fecha_hasta_date = _year_month_bounds(hasta_ym)[1] if hasta_ym else None
     return fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date
+
+
+def _enviar_correo_nueva_incidencia(incidencia):
+    usuario = incidencia.reportado_por
+    nombre_usuario = usuario.get_full_name().strip() or usuario.username
+
+    asunto = f"Nueva incidencia registrada - {nombre_usuario}"
+    mensaje = (
+        "Se ha registrado una nueva incidencia.\n\n"
+        f"Usuario: {nombre_usuario} ({usuario.username})\n"
+        f"Fecha incidencia: {incidencia.fecha_incidencia:%d/%m/%Y}\n"
+        f"Matricula: {incidencia.matricula_display}\n"
+        f"Tipo: {incidencia.tipo}\n"
+        f"Estado: {incidencia.get_estado_display()}\n\n"
+        "Detalle:\n"
+        f"{incidencia.detalle}\n"
+    )
+
+    backend = getattr(settings, "EMAIL_BACKEND", "")
+    host_user = getattr(settings, "EMAIL_HOST_USER", "")
+    host_password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+    if "smtp.EmailBackend" in backend and (not host_user or not host_password):
+        raise RuntimeError(
+            "Falta configurar EMAIL_HOST_USER y EMAIL_HOST_PASSWORD para SMTP."
+        )
+
+    remitente = host_user or getattr(settings, "DEFAULT_FROM_EMAIL", None) or "no-reply@localhost"
+    destinatarios = getattr(
+        settings, "INCIDENCIAS_EMAIL_TO", DESTINATARIO_PRUEBA_INCIDENCIAS
+    )
+    if isinstance(destinatarios, str):
+        destinatarios = [e.strip() for e in destinatarios.split(",") if e.strip()]
+    if not destinatarios:
+        destinatarios = [DESTINATARIO_PRUEBA_INCIDENCIAS]
+
+    send_mail(
+        subject=asunto,
+        message=mensaje,
+        from_email=remitente,
+        recipient_list=destinatarios,
+        fail_silently=False,
+    )
+
 
 @login_required
 def mis_ventas(request):
@@ -366,6 +417,20 @@ def registrar_incidencia(request):
                     usuario=request.user, matricula=form_data["matricula"]
                 )
                 incidencia.ventas.set(ventas_matricula)
+            try:
+                _enviar_correo_nueva_incidencia(incidencia)
+                messages.success(
+                    request, "Incidencia registrada y correo enviado correctamente."
+                )
+            except Exception:
+                logger.exception(
+                    "No se pudo enviar el correo de incidencia %s", incidencia.id
+                )
+                messages.warning(
+                    request,
+                    "Incidencia registrada, pero no se pudo enviar el correo. "
+                    "Revisa EMAIL_HOST_USER, EMAIL_HOST_PASSWORD y DEFAULT_FROM_EMAIL.",
+                )
             return redirect("mis_incidencias")
 
     context = {
