@@ -53,7 +53,7 @@ if not exist "requirements.txt" (
     echo No se encontro requirements.txt en %CD%.
     exit /b 1
 )
-pip install -r requirements.txt
+"%PYTHON_EXE%" -m pip install -r requirements.txt
 if errorlevel 1 (
     echo Error instalando dependencias.
     exit /b 1
