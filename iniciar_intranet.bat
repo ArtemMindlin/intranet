@@ -35,6 +35,7 @@ if exist "venv\Scripts\activate.bat" (
         exit /b 1
     )
 )
+
 set "ACTIVATE_BAT=%VENV_DIR%\Scripts\activate.bat"
 set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
 echo Entorno virtual seleccionado: %VENV_DIR%
@@ -53,6 +54,7 @@ if not exist "requirements.txt" (
     echo No se encontro requirements.txt en %CD%.
     exit /b 1
 )
+
 "%PYTHON_EXE%" -m pip install -r requirements.txt
 if errorlevel 1 (
     echo Error instalando dependencias.

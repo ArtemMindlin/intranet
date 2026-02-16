@@ -1,21 +1,19 @@
 ﻿from calendar import monthrange
 from datetime import date
-import logging
-
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.core.mail import send_mail
 from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-# Datos mockeados para mostrar en la plantilla. En un entorno real, estos datos se obtendrían de una consulta a SQL Server.
-from .mock_data import INCIDENCIAS
 from .models import Comision, Incidencia, Perfil, Venta
 
-logger = logging.getLogger(__name__)
-DESTINATARIO_PRUEBA_INCIDENCIAS = "artem.mindlin@marcosautomocion.com"
+# Envio de correo temporalmente desactivado:
+# import logging
+# from django.conf import settings
+# from django.contrib import messages
+# from django.core.mail import send_mail
+# logger = logging.getLogger(__name__)
+# DESTINATARIO_PRUEBA_INCIDENCIAS = "artem.mindlin@marcosautomocion.com"
 
 
 def _es_gerencia(user):
@@ -106,47 +104,11 @@ def _resolve_month_range(
     return fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date
 
 
-def _enviar_correo_nueva_incidencia(incidencia):
-    usuario = incidencia.reportado_por
-    nombre_usuario = usuario.get_full_name().strip() or usuario.username
-
-    asunto = f"Nueva incidencia registrada - {nombre_usuario}"
-    mensaje = (
-        "Se ha registrado una nueva incidencia.\n\n"
-        f"Usuario: {nombre_usuario} ({usuario.username})\n"
-        f"Fecha incidencia: {incidencia.fecha_incidencia:%d/%m/%Y}\n"
-        f"Matricula: {incidencia.matricula_display}\n"
-        f"Tipo: {incidencia.tipo}\n"
-        f"Estado: {incidencia.get_estado_display()}\n\n"
-        "Detalle:\n"
-        f"{incidencia.detalle}\n"
-    )
-
-    backend = getattr(settings, "EMAIL_BACKEND", "")
-    host_user = getattr(settings, "EMAIL_HOST_USER", "")
-    host_password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
-
-    if "smtp.EmailBackend" in backend and (not host_user or not host_password):
-        raise RuntimeError(
-            "Falta configurar EMAIL_HOST_USER y EMAIL_HOST_PASSWORD para SMTP."
-        )
-
-    remitente = host_user or getattr(settings, "DEFAULT_FROM_EMAIL", None) or "no-reply@localhost"
-    destinatarios = getattr(
-        settings, "INCIDENCIAS_EMAIL_TO", DESTINATARIO_PRUEBA_INCIDENCIAS
-    )
-    if isinstance(destinatarios, str):
-        destinatarios = [e.strip() for e in destinatarios.split(",") if e.strip()]
-    if not destinatarios:
-        destinatarios = [DESTINATARIO_PRUEBA_INCIDENCIAS]
-
-    send_mail(
-        subject=asunto,
-        message=mensaje,
-        from_email=remitente,
-        recipient_list=destinatarios,
-        fail_silently=False,
-    )
+# def _enviar_correo_nueva_incidencia(incidencia):
+#     """
+#     Envio de correo temporalmente desactivado.
+#     """
+#     pass
 
 
 @login_required
@@ -359,6 +321,11 @@ def mis_incidencias(request):
 @login_required
 def registrar_incidencia(request):
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    tipo_incidencia_opciones = [
+        "Falta venta",
+        "Sobra venta",
+        "Falta financiacion",
+    ]
     ventas_usuario = list(
         Venta.objects.filter(usuario=request.user).order_by("-fecha_venta", "-id")
     )
@@ -374,7 +341,7 @@ def registrar_incidencia(request):
     form_data = {
         "fecha_incidencia": date.today().strftime("%Y-%m-%d"),
         "matricula": "GENERAL",
-        "tipo": "",
+        "tipo": tipo_incidencia_opciones[0],
         "detalle": "",
     }
     errores = []
@@ -396,8 +363,8 @@ def registrar_incidencia(request):
         if form_data["matricula"] not in matriculas_opciones:
             errores.append("Debes seleccionar una matrícula de tus ventas.")
 
-        if not form_data["tipo"]:
-            errores.append("El tipo de incidencia es obligatorio.")
+        if form_data["tipo"] not in tipo_incidencia_opciones:
+            errores.append("Debes seleccionar un tipo de incidencia válido.")
 
         if not form_data["detalle"]:
             errores.append("El detalle de incidencia es obligatorio.")
@@ -417,20 +384,8 @@ def registrar_incidencia(request):
                     usuario=request.user, matricula=form_data["matricula"]
                 )
                 incidencia.ventas.set(ventas_matricula)
-            try:
-                _enviar_correo_nueva_incidencia(incidencia)
-                messages.success(
-                    request, "Incidencia registrada y correo enviado correctamente."
-                )
-            except Exception:
-                logger.exception(
-                    "No se pudo enviar el correo de incidencia %s", incidencia.id
-                )
-                messages.warning(
-                    request,
-                    "Incidencia registrada, pero no se pudo enviar el correo. "
-                    "Revisa EMAIL_HOST_USER, EMAIL_HOST_PASSWORD y DEFAULT_FROM_EMAIL.",
-                )
+            # Envio de correo temporalmente desactivado.
+            # _enviar_correo_nueva_incidencia(incidencia)
             return redirect("mis_incidencias")
 
     context = {
@@ -438,6 +393,7 @@ def registrar_incidencia(request):
         "form_data": form_data,
         "matriculas_disponibles": matriculas_disponibles,
         "matriculas_opciones": matriculas_opciones,
+        "tipo_incidencia_opciones": tipo_incidencia_opciones,
         "errores": errores,
     }
     return render(request, "comisiones/registrar_incidencia.html", context)
@@ -608,21 +564,44 @@ def incidencias_gerencia(request):
 
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
 
-    incidencias = INCIDENCIAS
-    if fecha_desde_date or fecha_hasta_date:
-        incidencias_filtradas = []
-        for incidencia in INCIDENCIAS:
-            try:
-                dia, mes, anio = incidencia.get("fecha", "").split("/")
-                fecha_incidencia = date(int(anio), int(mes), int(dia))
-            except (TypeError, ValueError):
-                continue
-            if fecha_desde_date and fecha_incidencia < fecha_desde_date:
-                continue
-            if fecha_hasta_date and fecha_incidencia > fecha_hasta_date:
-                continue
-            incidencias_filtradas.append(incidencia)
-        incidencias = incidencias_filtradas
+    incidencias_qs = (
+        Incidencia.objects.select_related("reportado_por")
+        .prefetch_related("ventas")
+        .order_by("-fecha_incidencia", "-id")
+    )
+    if fecha_desde_date:
+        incidencias_qs = incidencias_qs.filter(fecha_incidencia__gte=fecha_desde_date)
+    if fecha_hasta_date:
+        incidencias_qs = incidencias_qs.filter(fecha_incidencia__lte=fecha_hasta_date)
+
+    vendedor_val = (vendedor or "").strip()
+    if vendedor_val and vendedor_val.lower() != "todos":
+        incidencias_qs = incidencias_qs.filter(
+            Q(reportado_por__username__icontains=vendedor_val)
+            | Q(reportado_por__first_name__icontains=vendedor_val)
+            | Q(reportado_por__last_name__icontains=vendedor_val)
+            | Q(ventas__matricula__icontains=vendedor_val)
+        ).distinct()
+
+    incidencias = []
+    for incidencia in incidencias_qs:
+        usuario = incidencia.reportado_por
+        nombre_empleado = (
+            usuario.get_full_name().strip() if usuario else ""
+        ) or (usuario.username if usuario else "Sin asignar")
+        incidencias.append(
+            {
+                "empleado": nombre_empleado,
+                "matricula": incidencia.matricula_display,
+                "fecha": incidencia.fecha_incidencia.strftime("%d/%m/%Y"),
+                "tipo": incidencia.tipo,
+                "detalle": incidencia.detalle,
+                "estado": incidencia.get_estado_display(),
+                "validacion_ok": incidencia.validacion_ok,
+            }
+        )
+
+    pendientes_revision = incidencias_qs.filter(estado="pte_revision").count()
 
     context = {
         **_contexto_base_usuario(request, perfil),
@@ -630,7 +609,7 @@ def incidencias_gerencia(request):
         "fecha_hasta": fecha_hasta,
         "instalacion": instalacion,
         "vendedor": vendedor,
-        "pendientes_revision": 1,
+        "pendientes_revision": pendientes_revision,
         "incidencias": incidencias,
     }
     return render(request, "comisiones/incidencias_gerencia.html", context)

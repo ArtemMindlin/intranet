@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -133,18 +132,18 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 # Correo para notificaciones de incidencias.
 # Usa variables de entorno para no guardar credenciales en el repositorio.
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.office365.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "1") in ("1", "true", "True")
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "0") in ("1", "true", "True")
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL",
-    EMAIL_HOST_USER or "no-reply@marcosautomocion.com",
-)
-INCIDENCIAS_EMAIL_TO = os.getenv(
-    "INCIDENCIAS_EMAIL_TO", "artem.mindlin@marcosautomocion.com"
-)
+# EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+# EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.office365.com")
+# EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "1") in ("1", "true", "True")
+# EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "0") in ("1", "true", "True")
+# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+# EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
+# DEFAULT_FROM_EMAIL = os.getenv(
+#     "DEFAULT_FROM_EMAIL",
+#     EMAIL_HOST_USER or "no-reply@marcosautomocion.com",
+# )
+# INCIDENCIAS_EMAIL_TO = os.getenv(
+#     "INCIDENCIAS_EMAIL_TO", "artem.mindlin@marcosautomocion.com"
+# )

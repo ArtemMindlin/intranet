@@ -83,7 +83,11 @@
                     <article class="detail-field">
                         <div class="detail-field-label">Tipo de incidencia</div>
                         <div class="card detail-kpi">
-                            <input class="reg-input" type="text" name="tipo" value="{{ form_data.tipo }}" maxlength="150" required>
+                            <select class="reg-input center" name="tipo" required>
+                                {% for tipo in tipo_incidencia_opciones %}
+                                <option value="{{ tipo }}" {% if form_data.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </article>
                 </div>

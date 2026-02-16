@@ -238,8 +238,8 @@ Limitaciones detectadas en el estado actual:
 1. Ruta de comisiones de gerencia no expuesta:
    - `comisiones_gerencia` existe en vistas/plantillas, pero su `path(...)` esta comentado en `comisiones/urls.py`.
    - Se referencia ese nombre de ruta desde plantillas y redireccion por rol.
-2. Vistas de gerencia parcialmente mockeadas:
-   - `incidencias_gerencia` usa datos estaticos en `comisiones/mock_data.py`.
+2. Vistas de gerencia:
+   - `incidencias_gerencia` usa datos reales del modelo `Incidencia` en base de datos.
 3. Datos de perfil parcialmente hardcodeados:
    - `mi_perfil` muestra campos de ejemplo (DNI, telefono, organigrama) no persistidos en base de datos.
 4. Cobertura automatizada:
