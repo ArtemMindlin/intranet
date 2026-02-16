@@ -74,11 +74,11 @@
                 <h3>Filtros</h3>
                 <div class="field">
                     <label for="desde">Desde</label>
-                    <input type="date" id="desde" name="desde" value="{{ fecha_desde }}">
+                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
                 </div>
                 <div class="field">
                     <label for="hasta">Hasta</label>
-                    <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
                 </div>
                 <div class="field">
                     <label for="matricula">Matrícula</label>
@@ -176,6 +176,22 @@
         </section>
     </div>
 <script>
+    (function () {
+        const navEntry =
+            window.performance &&
+            window.performance.getEntriesByType &&
+            window.performance.getEntriesByType("navigation")[0];
+        const isReload = navEntry
+            ? navEntry.type === "reload"
+            : window.performance &&
+              window.performance.navigation &&
+              window.performance.navigation.type === 1;
+
+        if (isReload && window.location.search) {
+            window.location.replace(window.location.pathname);
+        }
+    })();
+
     (function () {
         const desde = document.getElementById("desde");
         const hasta = document.getElementById("hasta");
