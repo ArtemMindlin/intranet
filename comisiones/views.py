@@ -36,6 +36,68 @@ def _parse_iso_date(value):
     except ValueError:
         return None
 
+
+def _parse_year_month(value):
+    if not value:
+        return None
+    try:
+        year_str, month_str = value.split("-", 1)
+        year = int(year_str)
+        month = int(month_str)
+    except (TypeError, ValueError):
+        return None
+    if month < 1 or month > 12:
+        return None
+    return year, month
+
+
+def _format_year_month(value):
+    if not value:
+        return ""
+    year, month = value
+    return f"{year:04d}-{month:02d}"
+
+
+def _year_month_bounds(value):
+    year, month = value
+    first_day = date(year, month, 1)
+    last_day = date(year, month, monthrange(year, month)[1])
+    return first_day, last_day
+
+
+def _previous_year_month():
+    today = date.today()
+    if today.month == 1:
+        return today.year - 1, 12
+    return today.year, today.month - 1
+
+
+def _resolve_month_range(
+    desde_param, hasta_param, default_to_current=False, default_to_previous=False
+):
+    desde_ym = _parse_year_month(desde_param)
+    hasta_ym = _parse_year_month(hasta_param)
+    if default_to_previous:
+        default_month = _previous_year_month()
+        if not desde_ym:
+            desde_ym = default_month
+        if not hasta_ym:
+            hasta_ym = default_month
+    elif default_to_current:
+        current = (date.today().year, date.today().month)
+        if not desde_ym:
+            desde_ym = current
+        if not hasta_ym:
+            hasta_ym = current
+    if desde_ym and hasta_ym and hasta_ym < desde_ym:
+        hasta_ym = desde_ym
+
+    fecha_desde = _format_year_month(desde_ym)
+    fecha_hasta = _format_year_month(hasta_ym)
+    fecha_desde_date = _year_month_bounds(desde_ym)[0] if desde_ym else None
+    fecha_hasta_date = _year_month_bounds(hasta_ym)[1] if hasta_ym else None
+    return fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date
+
 @login_required
 def mis_ventas(request):
 
@@ -51,16 +113,9 @@ def mis_ventas(request):
             result.append(value)
         return result
 
-    fecha_desde_param = request.GET.get("desde")
-    fecha_hasta_param = request.GET.get("hasta")
-    fecha_desde_date = _parse_iso_date(fecha_desde_param)
-    fecha_hasta_date = _parse_iso_date(fecha_hasta_param)
-
-    if fecha_desde_date and fecha_hasta_date and fecha_hasta_date < fecha_desde_date:
-        fecha_hasta_date = fecha_desde_date
-
-    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d") if fecha_desde_date else ""
-    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d") if fecha_hasta_date else ""
+    fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
+    )
 
     ventas_periodo_qs = Venta.objects.filter(usuario=request.user)
     if fecha_desde_date:
@@ -181,15 +236,9 @@ def mis_incidencias(request):
             result.append(value)
         return result
 
-    fecha_desde_param = request.GET.get("desde")
-    fecha_hasta_param = request.GET.get("hasta")
-    fecha_desde_date = _parse_iso_date(fecha_desde_param)
-    fecha_hasta_date = _parse_iso_date(fecha_hasta_param)
-    if fecha_desde_date and fecha_hasta_date and fecha_hasta_date < fecha_desde_date:
-        fecha_hasta_date = fecha_desde_date
-
-    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d") if fecha_desde_date else ""
-    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d") if fecha_hasta_date else ""
+    fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
+        request.GET.get("desde"), request.GET.get("hasta")
+    )
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
     incidencias_periodo_qs = Incidencia.objects.filter(reportado_por=request.user)
     if fecha_desde_date:
@@ -331,14 +380,9 @@ def registrar_incidencia(request):
 
 @login_required
 def detalle_incidencia_personal(request, incidencia_id):
-    fecha_desde_param = request.GET.get("desde")
-    fecha_hasta_param = request.GET.get("hasta")
-    fecha_desde_date = _parse_iso_date(fecha_desde_param)
-    fecha_hasta_date = _parse_iso_date(fecha_hasta_param)
-    if fecha_desde_date and fecha_hasta_date and fecha_hasta_date < fecha_desde_date:
-        fecha_hasta_date = fecha_desde_date
-    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d") if fecha_desde_date else ""
-    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d") if fecha_hasta_date else ""
+    fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
+        request.GET.get("desde"), request.GET.get("hasta")
+    )
 
     filtros = {
         "matricula": request.GET.get("matricula", "").strip(),
@@ -430,15 +474,9 @@ def comisiones_gerencia(request):
     if not _es_gerencia(request.user):
         return redirect("redirigir_por_rol")
 
-    today = date.today()
-    first_day = today.replace(day=1)
-    last_day = today.replace(day=monthrange(today.year, today.month)[1])
-    fecha_desde_param = request.GET.get("desde")
-    fecha_hasta_param = request.GET.get("hasta")
-    fecha_desde_date = _parse_iso_date(fecha_desde_param) or first_day
-    fecha_hasta_date = _parse_iso_date(fecha_hasta_param) or last_day
-    fecha_desde = fecha_desde_date.strftime("%Y-%m-%d")
-    fecha_hasta = fecha_hasta_date.strftime("%Y-%m-%d")
+    fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
+    )
     instalacion = request.GET.get("instalacion", "2901: Nissan Orihuela")
     vendedor = request.GET.get("vendedor", "Todos")
 
@@ -497,17 +535,29 @@ def incidencias_gerencia(request):
     if not _es_gerencia(request.user):
         return redirect("redirigir_por_rol")
 
-    today = date.today()
-    first_day = today.replace(day=1)
-    last_day = today.replace(day=monthrange(today.year, today.month)[1])
-    fecha_desde = request.GET.get("desde") or first_day.strftime("%Y-%m-%d")
-    fecha_hasta = request.GET.get("hasta") or last_day.strftime("%Y-%m-%d")
+    fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
+    )
     instalacion = request.GET.get("instalacion", "2901: Nissan Orihuela")
     vendedor = request.GET.get("vendedor", "Todos")
 
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
 
     incidencias = INCIDENCIAS
+    if fecha_desde_date or fecha_hasta_date:
+        incidencias_filtradas = []
+        for incidencia in INCIDENCIAS:
+            try:
+                dia, mes, anio = incidencia.get("fecha", "").split("/")
+                fecha_incidencia = date(int(anio), int(mes), int(dia))
+            except (TypeError, ValueError):
+                continue
+            if fecha_desde_date and fecha_incidencia < fecha_desde_date:
+                continue
+            if fecha_hasta_date and fecha_incidencia > fecha_hasta_date:
+                continue
+            incidencias_filtradas.append(incidencia)
+        incidencias = incidencias_filtradas
 
     context = {
         **_contexto_base_usuario(request, perfil),
