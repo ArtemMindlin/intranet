@@ -41,6 +41,7 @@
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
             <a href="{% url 'mis_incidencias' %}" class="active">Mis Incidencias</a>
+            <a href="{% url 'mis_comunicaciones' %}">Mis Comunicaciones</a>
         </nav>
 
         <div class="breadcrumb"></div>
@@ -53,7 +54,9 @@
         {% endif %}
 
         <section class="inc-filters card">
-            <form method="get" class="inc-filters-grid">
+            <form method="get" class="inc-filters-grid" id="mis-incidencias-filtros-form">
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+                <input type="hidden" name="dir" value="{{ sort_dir }}">
                 <div class="field">
                     <label for="desde">Desde</label>
                     <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
@@ -91,12 +94,67 @@
                 <table class="inc-table">
                     <thead>
                         <tr>
-                            <th>Matrícula</th>
-                            <th>Fecha incidencia</th>
-                            <th>Tipo incidencia</th>
-                            <th>Detalle incidencia</th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Matrícula</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'matricula' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=matricula&dir={{ siguiente_direccion.matricula }}"
+                                        aria-label="Ordenar por matrícula"
+                                    >
+                                        {% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Fecha incidencia</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
+                                        aria-label="Ordenar por fecha"
+                                    >
+                                        {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Tipo incidencia</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'tipo' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=tipo&dir={{ siguiente_direccion.tipo }}"
+                                        aria-label="Ordenar por tipo"
+                                    >
+                                        {% if sort_by == 'tipo' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Detalle incidencia</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'detalle' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=detalle&dir={{ siguiente_direccion.detalle }}"
+                                        aria-label="Ordenar por detalle"
+                                    >
+                                        {% if sort_by == 'detalle' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
                             <th>Detalle</th>
-                            <th>Estado</th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Estado</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'estado' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=estado&dir={{ siguiente_direccion.estado }}"
+                                        aria-label="Ordenar por estado"
+                                    >
+                                        {% if sort_by == 'estado' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,7 +167,7 @@
                             <td class="center">
                                 <a
                                     class="pill-link"
-                                    href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}"
+                                    href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort={{ sort_by }}&dir={{ sort_dir }}"
                                     aria-label="Ver detalle de incidencia"
                                 >
                                     <span class="pill">+</span>
@@ -156,7 +214,6 @@
                     hasta.value = desde.value;
                 }
             }
-
             desde.addEventListener("change", syncDateLimits);
             hasta.addEventListener("change", syncDateLimits);
             syncDateLimits();

@@ -104,6 +104,45 @@ def _resolve_month_range(
     return fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date
 
 
+def _build_empty_pdf_bytes():
+    objects = [
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R >>\nendobj\n",
+        b"4 0 obj\n<< /Length 0 >>\nstream\n\nendstream\nendobj\n",
+    ]
+
+    pdf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for obj in objects:
+        offsets.append(len(pdf))
+        pdf.extend(obj)
+
+    xref_offset = len(pdf)
+    pdf.extend(b"xref\n")
+    pdf.extend(f"0 {len(objects) + 1}\n".encode("ascii"))
+    pdf.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        pdf.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+
+    pdf.extend(b"trailer\n")
+    pdf.extend(f"<< /Size {len(objects) + 1} /Root 1 0 R >>\n".encode("ascii"))
+    pdf.extend(b"startxref\n")
+    pdf.extend(f"{xref_offset}\n".encode("ascii"))
+    pdf.extend(b"%%EOF\n")
+    return bytes(pdf)
+
+
+@login_required
+def descargar_boletin_mock(request, boletin_id):
+    pdf_bytes = _build_empty_pdf_bytes()
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="boletin_{boletin_id}.pdf"'
+    )
+    return response
+
+
 # def _enviar_correo_nueva_incidencia(incidencia):
 #     """
 #     Envio de correo temporalmente desactivado.
@@ -194,6 +233,37 @@ def mis_ventas(request):
             nombre_cliente__icontains=filtros["nombre_cliente"]
         )
 
+    sort_by = request.GET.get("sort", "fecha").strip().lower()
+    sort_dir = request.GET.get("dir", "desc").strip().lower()
+    campos_ordenables = {
+        "matricula": "matricula",
+        "fecha": "fecha_venta",
+        "idv": "idv",
+        "tipo_venta": "tipo_venta",
+        "ud_financiadas": "ud_financiadas",
+        "dni": "dni",
+        "tipo_cliente": "tipo_cliente",
+        "nombre_cliente": "nombre_cliente",
+    }
+    if sort_by not in campos_ordenables:
+        sort_by = "fecha"
+    if sort_dir not in {"asc", "desc"}:
+        sort_dir = "desc"
+
+    campo_orden = campos_ordenables[sort_by]
+    prefijo = "" if sort_dir == "asc" else "-"
+    orden = [f"{prefijo}{campo_orden}"]
+    if campo_orden != "id":
+        orden.append("id" if sort_dir == "asc" else "-id")
+    ventas_qs = ventas_qs.order_by(*orden)
+
+    siguiente_direccion = {}
+    for campo in campos_ordenables:
+        if sort_by == campo and sort_dir == "asc":
+            siguiente_direccion[campo] = "desc"
+        else:
+            siguiente_direccion[campo] = "asc"
+
     ventas = list(ventas_qs)
     total_comision_aprobada = (
         Comision.objects.filter(venta__in=ventas_qs, estado="aprobada").aggregate(
@@ -229,6 +299,9 @@ def mis_ventas(request):
         "dni_opciones": dni_opciones,
         "tipo_cliente_opciones": tipo_cliente_opciones,
         "nombre_cliente_opciones": nombre_cliente_opciones,
+        "sort_by": sort_by,
+        "sort_dir": sort_dir,
+        "siguiente_direccion": siguiente_direccion,
     }
 
     return render(request, "comisiones/mis_ventas.html", context)
@@ -250,7 +323,7 @@ def mis_incidencias(request):
         return result
 
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
-        request.GET.get("desde"), request.GET.get("hasta")
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
     )
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
     incidencias_periodo_qs = Incidencia.objects.filter(reportado_por=request.user)
@@ -305,6 +378,54 @@ def mis_incidencias(request):
     else:
         filtros["estado"] = ""
 
+    sort_by = request.GET.get("sort", "fecha").strip().lower()
+    sort_dir = request.GET.get("dir", "desc").strip().lower()
+    campos_ordenables = {"matricula", "fecha", "tipo", "detalle", "estado"}
+    if sort_by not in campos_ordenables:
+        sort_by = "fecha"
+    if sort_dir not in {"asc", "desc"}:
+        sort_dir = "desc"
+
+    incidencias = list(incidencias.prefetch_related("ventas"))
+    reverse_order = sort_dir == "desc"
+    if sort_by == "fecha":
+        incidencias = sorted(
+            incidencias,
+            key=lambda item: (item.fecha_incidencia or date.min, item.id),
+            reverse=reverse_order,
+        )
+    elif sort_by == "matricula":
+        incidencias = sorted(
+            incidencias,
+            key=lambda item: (item.matricula_display.lower(), item.id),
+            reverse=reverse_order,
+        )
+    elif sort_by == "tipo":
+        incidencias = sorted(
+            incidencias,
+            key=lambda item: (item.tipo.lower(), item.id),
+            reverse=reverse_order,
+        )
+    elif sort_by == "detalle":
+        incidencias = sorted(
+            incidencias,
+            key=lambda item: (item.detalle.lower(), item.id),
+            reverse=reverse_order,
+        )
+    else:
+        incidencias = sorted(
+            incidencias,
+            key=lambda item: (item.get_estado_display().lower(), item.id),
+            reverse=reverse_order,
+        )
+
+    siguiente_direccion = {}
+    for campo in campos_ordenables:
+        if sort_by == campo and sort_dir == "asc":
+            siguiente_direccion[campo] = "desc"
+        else:
+            siguiente_direccion[campo] = "asc"
+
     context = {
         **_contexto_base_usuario(request, perfil),
         "ultima_conexion": request.user.last_login,
@@ -314,8 +435,116 @@ def mis_incidencias(request):
         "filtros": filtros,
         "matriculas_opciones": matriculas_opciones,
         "estado_opciones": estado_opciones,
+        "sort_by": sort_by,
+        "sort_dir": sort_dir,
+        "siguiente_direccion": siguiente_direccion,
     }
     return render(request, "comisiones/incidencias_personales.html", context)
+
+
+@login_required
+def mis_comunicaciones(request):
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
+    )
+
+    comunicaciones = [
+        {
+            "id": 1,
+            "boletin": "Boletin de objetivos comerciales",
+            "fecha": date(2026, 2, 10),
+            "marca": "Nissan",
+            "tipo": "Comercial",
+        },
+        {
+            "id": 2,
+            "boletin": "Novedades de financiacion Q1",
+            "fecha": date(2026, 1, 28),
+            "marca": "Renault",
+            "tipo": "Financiero",
+        },
+        {
+            "id": 3,
+            "boletin": "Cambios de campanas de marca",
+            "fecha": date(2026, 1, 16),
+            "marca": "Dacia",
+            "tipo": "Marketing",
+        },
+    ]
+
+    comunicaciones = sorted(comunicaciones, key=lambda item: item["fecha"], reverse=True)
+    comunicaciones_periodo = comunicaciones
+    if fecha_desde_date:
+        comunicaciones_periodo = [
+            item for item in comunicaciones_periodo if item["fecha"] >= fecha_desde_date
+        ]
+    if fecha_hasta_date:
+        comunicaciones_periodo = [
+            item for item in comunicaciones_periodo if item["fecha"] <= fecha_hasta_date
+        ]
+
+    marcas_opciones = sorted({item["marca"] for item in comunicaciones_periodo})
+    tipos_opciones = sorted({item["tipo"] for item in comunicaciones_periodo})
+    filtros = {
+        "marca": request.GET.get("marca", "").strip(),
+        "tipo": request.GET.get("tipo", "").strip(),
+    }
+    sort_by = request.GET.get("sort", "fecha").strip().lower()
+    sort_dir = request.GET.get("dir", "desc").strip().lower()
+    campos_ordenables = {"boletin", "fecha", "marca", "tipo"}
+    if sort_by not in campos_ordenables:
+        sort_by = "fecha"
+    if sort_dir not in {"asc", "desc"}:
+        sort_dir = "desc"
+
+    comunicaciones_filtradas = comunicaciones_periodo
+    if filtros["marca"]:
+        comunicaciones_filtradas = [
+            item
+            for item in comunicaciones_filtradas
+            if item["marca"].lower() == filtros["marca"].lower()
+        ]
+    if filtros["tipo"]:
+        comunicaciones_filtradas = [
+            item
+            for item in comunicaciones_filtradas
+            if item["tipo"].lower() == filtros["tipo"].lower()
+        ]
+
+    reverse_order = sort_dir == "desc"
+    if sort_by == "fecha":
+        comunicaciones_filtradas = sorted(
+            comunicaciones_filtradas, key=lambda item: item["fecha"], reverse=reverse_order
+        )
+    else:
+        comunicaciones_filtradas = sorted(
+            comunicaciones_filtradas,
+            key=lambda item: str(item.get(sort_by, "")).lower(),
+            reverse=reverse_order,
+        )
+
+    siguiente_direccion = {}
+    for campo in campos_ordenables:
+        if sort_by == campo and sort_dir == "asc":
+            siguiente_direccion[campo] = "desc"
+        else:
+            siguiente_direccion[campo] = "asc"
+
+    context = {
+        **_contexto_base_usuario(request, perfil),
+        "ultima_conexion": request.user.last_login,
+        "fecha_desde": fecha_desde,
+        "fecha_hasta": fecha_hasta,
+        "filtros": filtros,
+        "marcas_opciones": marcas_opciones,
+        "tipos_opciones": tipos_opciones,
+        "sort_by": sort_by,
+        "sort_dir": sort_dir,
+        "siguiente_direccion": siguiente_direccion,
+        "comunicaciones": comunicaciones_filtradas,
+    }
+    return render(request, "comisiones/mis_comunicaciones.html", context)
 
 
 @login_required

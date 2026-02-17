@@ -41,6 +41,7 @@
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}" class="active">Mis Ventas</a>
             <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
+            <a href="{% url 'mis_comunicaciones' %}">Mis Comunicaciones</a>
         </nav>
 
         <div class="breadcrumb"></div>
@@ -59,8 +60,10 @@
         </section>
 
         <section class="content">
-            <form class="filters" method="get">
+            <form class="filters" method="get" id="mis-ventas-filtros-form">
                 <h3>Filtros</h3>
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+                <input type="hidden" name="dir" value="{{ sort_dir }}">
                 <div class="field">
                     <label for="desde">Desde</label>
                     <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
@@ -123,7 +126,7 @@
                         {% endfor %}
                     </datalist>
                 </div>
-                <div class="field">
+                <div class="field field-submit">
                     <button type="submit">Aplicar filtro</button>
                 </div>
             </form>
@@ -132,14 +135,102 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Matricula</th>
-                            <th>Fecha</th>
-                            <th>IDV</th>
-                            <th>Tipo venta</th>
-                            <th>UD financiadas</th>
-                            <th>DNI</th>
-                            <th>Tipo cliente</th>
-                            <th>Nombre cliente</th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Matricula</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'matricula' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=matricula&dir={{ siguiente_direccion.matricula }}"
+                                        aria-label="Ordenar por matricula"
+                                    >
+                                        {% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Fecha</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
+                                        aria-label="Ordenar por fecha"
+                                    >
+                                        {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>IDV</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'idv' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=idv&dir={{ siguiente_direccion.idv }}"
+                                        aria-label="Ordenar por idv"
+                                    >
+                                        {% if sort_by == 'idv' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Tipo venta</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'tipo_venta' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_venta&dir={{ siguiente_direccion.tipo_venta }}"
+                                        aria-label="Ordenar por tipo de venta"
+                                    >
+                                        {% if sort_by == 'tipo_venta' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>UD financiadas</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'ud_financiadas' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=ud_financiadas&dir={{ siguiente_direccion.ud_financiadas }}"
+                                        aria-label="Ordenar por unidades financiadas"
+                                    >
+                                        {% if sort_by == 'ud_financiadas' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>DNI</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'dni' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=dni&dir={{ siguiente_direccion.dni }}"
+                                        aria-label="Ordenar por dni"
+                                    >
+                                        {% if sort_by == 'dni' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Tipo cliente</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'tipo_cliente' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_cliente&dir={{ siguiente_direccion.tipo_cliente }}"
+                                        aria-label="Ordenar por tipo de cliente"
+                                    >
+                                        {% if sort_by == 'tipo_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Nombre cliente</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'nombre_cliente' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=nombre_cliente&dir={{ siguiente_direccion.nombre_cliente }}"
+                                        aria-label="Ordenar por nombre de cliente"
+                                    >
+                                        {% if sort_by == 'nombre_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -193,7 +284,6 @@
                 hasta.value = desde.value;
             }
         }
-
         desde.addEventListener("change", syncDateLimits);
         hasta.addEventListener("change", syncDateLimits);
         syncDateLimits();

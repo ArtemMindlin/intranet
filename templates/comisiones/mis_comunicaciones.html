@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comisiones - Mis Comunicaciones</title>
+    <link rel="stylesheet" href="{% static 'css/mis_comunicaciones.css' %}">
+</head>
+<body>
+    <div class="page">
+        <header class="top">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+            </div>
+
+            <div class="user-panel">
+                <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+                    {% if foto_perfil_url %}
+                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                    {% else %}
+                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="meta-row">{{ usuario_nombre }}</div>
+                        <div class="meta-row">{{ usuario_login }}</div>
+                        <div class="meta-row">{{ sede }}</div>
+                        <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </a>
+                <form class="header-logout-form" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'login' %}">
+                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                </form>
+            </div>
+        </header>
+
+        <h1 class="page-title">Portal de comisiones</h1>
+
+        <nav class="nav">
+            <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
+            <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
+            <a href="{% url 'mis_comunicaciones' %}" class="active">Mis Comunicaciones</a>
+        </nav>
+
+        <div class="breadcrumb"></div>
+
+        <section class="inc-filters card">
+            <form method="get" class="inc-filters-grid" id="comunicaciones-filtros-form">
+                <div class="field">
+                    <label for="desde">Desde</label>
+                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
+                </div>
+                <div class="field">
+                    <label for="hasta">Hasta</label>
+                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                </div>
+                <div class="field">
+                    <label for="marca">Marca</label>
+                    <select id="marca" name="marca">
+                        <option value="">Todas</option>
+                        {% for marca in marcas_opciones %}
+                        <option value="{{ marca }}" {% if filtros.marca == marca %}selected{% endif %}>{{ marca }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="tipo">Tipo</label>
+                    <select id="tipo" name="tipo">
+                        <option value="">Todos</option>
+                        {% for tipo in tipos_opciones %}
+                        <option value="{{ tipo }}" {% if filtros.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field field-submit">
+                    <button type="submit">Aplicar filtro</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="communications-wrap">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Boletin</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'boletin' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=boletin&dir={{ siguiente_direccion.boletin }}"
+                                        aria-label="Ordenar por boletin"
+                                    >
+                                        {% if sort_by == 'boletin' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Fecha</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
+                                        aria-label="Ordenar por fecha"
+                                    >
+                                        {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Marca</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'marca' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=marca&dir={{ siguiente_direccion.marca }}"
+                                        aria-label="Ordenar por marca"
+                                    >
+                                        {% if sort_by == 'marca' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-sort-wrap">
+                                    <span>Tipo</span>
+                                    <a
+                                        class="sort-icon-btn{% if sort_by == 'tipo' %} active{% endif %}"
+                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=tipo&dir={{ siguiente_direccion.tipo }}"
+                                        aria-label="Ordenar por tipo"
+                                    >
+                                        {% if sort_by == 'tipo' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                    </a>
+                                </div>
+                            </th>
+                            <th>Ver Boletin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comunicacion in comunicaciones %}
+                        <tr>
+                            <td>{{ comunicacion.boletin }}</td>
+                            <td class="center">{{ comunicacion.fecha|date:"d/m/Y" }}</td>
+                            <td class="center">{{ comunicacion.marca }}</td>
+                            <td class="center">{{ comunicacion.tipo }}</td>
+                            <td class="center">
+                                <a class="boletin-link" href="{% url 'descargar_boletin_mock' comunicacion.id %}">Ver</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="center">No hay boletines disponibles.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <script>
+        (function () {
+            const navEntry =
+                window.performance &&
+                window.performance.getEntriesByType &&
+                window.performance.getEntriesByType("navigation")[0];
+            const isReload = navEntry
+                ? navEntry.type === "reload"
+                : window.performance &&
+                  window.performance.navigation &&
+                  window.performance.navigation.type === 1;
+
+            if (isReload && window.location.search) {
+                window.location.replace(window.location.pathname);
+            }
+        })();
+
+        (function () {
+            const desde = document.getElementById("desde");
+            const hasta = document.getElementById("hasta");
+            if (!desde || !hasta) return;
+
+            function syncDateLimits() {
+                hasta.min = desde.value || "";
+                desde.max = hasta.value || "";
+                if (desde.value && hasta.value && hasta.value < desde.value) {
+                    hasta.value = desde.value;
+                }
+            }
+
+            desde.addEventListener("change", syncDateLimits);
+            hasta.addEventListener("change", syncDateLimits);
+            syncDateLimits();
+        })();
+    </script>
+</body>
+</html>
+

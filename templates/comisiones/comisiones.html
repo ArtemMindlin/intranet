@@ -44,7 +44,7 @@
         <div class="breadcrumb"></div>
 
         <section class="manager-filters card">
-            <form class="manager-filters-grid" method="get">
+            <form class="manager-filters-grid" method="get" id="gerencia-comisiones-filtros-form">
                 <div class="field">
                     <label for="desde">Desde</label>
                     <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
@@ -138,6 +138,24 @@
             if (isReload && window.location.search) {
                 window.location.replace(window.location.pathname);
             }
+        })();
+
+        (function () {
+            const desde = document.getElementById("desde");
+            const hasta = document.getElementById("hasta");
+            if (!desde || !hasta) return;
+
+            function syncDateLimits() {
+                hasta.min = desde.value || "";
+                desde.max = hasta.value || "";
+                if (desde.value && hasta.value && hasta.value < desde.value) {
+                    hasta.value = desde.value;
+                }
+            }
+
+            desde.addEventListener("change", syncDateLimits);
+            hasta.addEventListener("change", syncDateLimits);
+            syncDateLimits();
         })();
     </script>
 </body>

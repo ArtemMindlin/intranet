@@ -18,6 +18,16 @@ urlpatterns = [
     # Vistas de incidencias del comercial.
     path("mis_incidencias/", views.mis_incidencias, name="mis_incidencias"),
     path(
+        "mis_comunicaciones/",
+        views.mis_comunicaciones,
+        name="mis_comunicaciones",
+    ),
+    path(
+        "mis_comunicaciones/boletin/<int:boletin_id>/descargar/",
+        views.descargar_boletin_mock,
+        name="descargar_boletin_mock",
+    ),
+    path(
         "registrar_incidencia/",
         views.registrar_incidencia,
         name="registrar_incidencia",

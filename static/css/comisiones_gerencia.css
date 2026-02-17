@@ -86,7 +86,7 @@
 }
 
 .manager-table-wrap {
-    border: 3px solid #d4d4d4;
+    border: none;
     background: #f8f8f8;
     border-radius: 0 0 14px 14px;
     padding: 10px;
