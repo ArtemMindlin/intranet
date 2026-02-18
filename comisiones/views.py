@@ -547,6 +547,35 @@ def mis_comunicaciones(request):
     return render(request, "comisiones/mis_comunicaciones.html", context)
 
 
+def _render_pagina_boletin_simple(request, template_name):
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    context = {
+        **_contexto_base_usuario(request, perfil),
+        "ultima_conexion": request.user.last_login,
+    }
+    return render(request, template_name, context)
+
+
+@login_required
+def normativas(request):
+    return _render_pagina_boletin_simple(request, "comisiones/normativas.html")
+
+
+@login_required
+def manuales(request):
+    return _render_pagina_boletin_simple(request, "comisiones/manuales.html")
+
+
+@login_required
+def avisos_sin_leer(request):
+    return _render_pagina_boletin_simple(request, "comisiones/avisos_sin_leer.html")
+
+
+@login_required
+def vehiculos_en_uso(request):
+    return _render_pagina_boletin_simple(request, "comisiones/vehiculos_en_uso.html")
+
+
 @login_required
 def registrar_incidencia(request):
     perfil, _ = Perfil.objects.get_or_create(user=request.user)

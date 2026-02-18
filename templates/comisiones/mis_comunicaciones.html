@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comisiones - Mis Comunicaciones</title>
+    <title>Comisiones - Boletin</title>
     <link rel="stylesheet" href="{% static 'css/mis_comunicaciones.css' %}">
 </head>
 <body>
@@ -41,7 +41,11 @@
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
             <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
-            <a href="{% url 'mis_comunicaciones' %}" class="active">Mis Comunicaciones</a>
+            <a href="{% url 'boletin' %}" class="active">Boletin</a>
+            <a href="{% url 'normativas' %}">Normativas</a>
+            <a href="{% url 'manuales' %}">Manuales</a>
+            <a href="{% url 'avisos_sin_leer' %}">Avisos sin leer</a>
+            <a href="{% url 'vehiculos_en_uso' %}">Vehiculos en uso</a>
         </nav>
 
         <div class="breadcrumb"></div>
