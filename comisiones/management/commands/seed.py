@@ -217,10 +217,14 @@ class Command(BaseCommand):
         for idx in range(n_ventas):
             vendedor = vendedores[idx % len(vendedores)]
             tipo_venta = random.choice([code for code, _ in Venta.TIPO_VENTA_CHOICES])
-            tipo_cliente = random.choice([code for code, _ in Venta.TIPO_CLIENTE_CHOICES])
+            tipo_cliente = random.choice(
+                [code for code, _ in Venta.TIPO_CLIENTE_CHOICES]
+            )
             matricula = f"{random.randint(1000, 9999)}{random.choice(prefijos)}"[:10]
             idv = 2000000 + idx
-            ud_financiadas = random.choice([None, 1, 1, 2]) if tipo_venta != "EXENTA" else None
+            ud_financiadas = (
+                random.choice([None, 1, 1, 2]) if tipo_venta != "EXENTA" else None
+            )
             cliente = random.choice(nombres)
             dni_pref = random.randint(10000000, 99999999)
             dni_suf = random.choice(sufijos)[0]

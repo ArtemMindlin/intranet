@@ -8,26 +8,59 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comisiones', '0004_venta_usuario'),
+        ("comisiones", "0004_venta_usuario"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Incidencia',
+            name="Incidencia",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('es_general', models.BooleanField(default=False)),
-                ('fecha_incidencia', models.DateField(auto_now_add=True)),
-                ('tipo', models.CharField(max_length=150)),
-                ('detalle', models.TextField()),
-                ('estado', models.CharField(choices=[('pte_revision', 'Pte. revision'), ('aceptada', 'Aceptada'), ('rechazada', 'Rechazada')], default='pte_revision', max_length=20)),
-                ('validacion_ok', models.BooleanField(default=False)),
-                ('reportado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='incidencias_reportadas', to=settings.AUTH_USER_MODEL)),
-                ('ventas', models.ManyToManyField(blank=True, related_name='incidencias', to='comisiones.venta')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("es_general", models.BooleanField(default=False)),
+                ("fecha_incidencia", models.DateField(auto_now_add=True)),
+                ("tipo", models.CharField(max_length=150)),
+                ("detalle", models.TextField()),
+                (
+                    "estado",
+                    models.CharField(
+                        choices=[
+                            ("pte_revision", "Pte. revision"),
+                            ("aceptada", "Aceptada"),
+                            ("rechazada", "Rechazada"),
+                        ],
+                        default="pte_revision",
+                        max_length=20,
+                    ),
+                ),
+                ("validacion_ok", models.BooleanField(default=False)),
+                (
+                    "reportado_por",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="incidencias_reportadas",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "ventas",
+                    models.ManyToManyField(
+                        blank=True, related_name="incidencias", to="comisiones.venta"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-fecha_incidencia', '-id'],
+                "ordering": ["-fecha_incidencia", "-id"],
             },
         ),
     ]

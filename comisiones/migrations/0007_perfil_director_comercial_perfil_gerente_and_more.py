@@ -8,24 +8,42 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comisiones', '0006_alter_incidencia_fecha_incidencia'),
+        ("comisiones", "0006_alter_incidencia_fecha_incidencia"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='perfil',
-            name='director_comercial',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='gerentes_asignados', to=settings.AUTH_USER_MODEL),
+            model_name="perfil",
+            name="director_comercial",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="gerentes_asignados",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='perfil',
-            name='gerente',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='jefes_ventas_asignados', to=settings.AUTH_USER_MODEL),
+            model_name="perfil",
+            name="gerente",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="jefes_ventas_asignados",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='perfil',
-            name='jefe_ventas',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='vendedores_asignados', to=settings.AUTH_USER_MODEL),
+            model_name="perfil",
+            name="jefe_ventas",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="vendedores_asignados",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

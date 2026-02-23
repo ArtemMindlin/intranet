@@ -8,6 +8,7 @@ from django.dispatch import receiver
 
 # Create your models here.
 
+
 class Venta(models.Model):
     usuario = models.ForeignKey(
         User,
@@ -49,15 +50,27 @@ class Comision(models.Model):
 
     venta = models.ForeignKey("Venta", on_delete=models.CASCADE)
     monto = models.DecimalField(max_digits=10, decimal_places=2)
-    facturacion = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    margen_bruto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    imp_costo = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    facturacion = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    margen_bruto = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    imp_costo = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
     comision_financiera = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
     )
-    total_beneficio = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    seguros = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    imp_comision = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    total_beneficio = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    seguros = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    imp_comision = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
     ESTADOS = [
         ("pendiente", "Pendiente"),
         ("aprobada", "Aprobada"),
@@ -139,7 +152,9 @@ class Perfil(models.Model):
         # Jerarquia automatica:
         # vendedor -> jefe_ventas -> gerente -> director_comercial
         if self.jefe_ventas_id:
-            jefe_perfil = self.__class__.objects.filter(user_id=self.jefe_ventas_id).first()
+            jefe_perfil = self.__class__.objects.filter(
+                user_id=self.jefe_ventas_id
+            ).first()
             self.gerente = jefe_perfil.gerente if jefe_perfil else None
 
             if self.gerente_id:
@@ -152,7 +167,9 @@ class Perfil(models.Model):
             else:
                 self.director_comercial = None
         elif self.gerente_id:
-            gerente_perfil = self.__class__.objects.filter(user_id=self.gerente_id).first()
+            gerente_perfil = self.__class__.objects.filter(
+                user_id=self.gerente_id
+            ).first()
             self.director_comercial = (
                 gerente_perfil.director_comercial if gerente_perfil else None
             )
