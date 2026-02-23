@@ -367,7 +367,9 @@ def mis_incidencias(request):
         request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
     )
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
-    incidencias_periodo_qs = Incidencia.objects.filter(reportado_por=request.user)
+    incidencias_periodo_qs = Incidencia.objects.filter(
+        reportado_por=request.user
+    ).prefetch_related("ventas")
     if fecha_desde_date:
         incidencias_periodo_qs = incidencias_periodo_qs.filter(
             fecha_incidencia__gte=fecha_desde_date
@@ -376,24 +378,27 @@ def mis_incidencias(request):
         incidencias_periodo_qs = incidencias_periodo_qs.filter(
             fecha_incidencia__lte=fecha_hasta_date
         )
-    incidencias_periodo_qs = incidencias_periodo_qs.prefetch_related("ventas")
-    incidencias_periodo = list(incidencias_periodo_qs)
 
     matriculas_opciones = []
-    matriculas_seen = set()
-    for incidencia in incidencias_periodo:
-        if incidencia.es_general and "GENERAL" not in matriculas_seen:
-            matriculas_opciones.append("GENERAL")
-            matriculas_seen.add("GENERAL")
-            continue
-        for venta in incidencia.ventas.all():
-            if venta.matricula in matriculas_seen:
-                continue
-            matriculas_opciones.append(venta.matricula)
-            matriculas_seen.add(venta.matricula)
+    if incidencias_periodo_qs.filter(es_general=True).exists():
+        matriculas_opciones.append("GENERAL")
+    matriculas_opciones.extend(
+        list(
+            Venta.objects.filter(incidencias__in=incidencias_periodo_qs)
+            .exclude(matricula__isnull=True)
+            .exclude(matricula="")
+            .values_list("matricula", flat=True)
+            .distinct()
+            .order_by("matricula")
+        )
+    )
 
-    estado_codes = _unique_non_empty(
-        incidencia.estado for incidencia in incidencias_periodo
+    estado_codes = list(
+        incidencias_periodo_qs.exclude(estado__isnull=True)
+        .exclude(estado="")
+        .values_list("estado", flat=True)
+        .distinct()
+        .order_by("estado")
     )
     estado_dict = dict(Incidencia.ESTADOS)
     estado_opciones = [
@@ -427,37 +432,25 @@ def mis_incidencias(request):
     if sort_dir not in {"asc", "desc"}:
         sort_dir = "desc"
 
-    incidencias = list(incidencias.prefetch_related("ventas"))
     reverse_order = sort_dir == "desc"
-    if sort_by == "fecha":
-        incidencias = sorted(
-            incidencias,
-            key=lambda item: (item.fecha_incidencia or date.min, item.id),
-            reverse=reverse_order,
-        )
-    elif sort_by == "matricula":
+    if sort_by == "matricula":
+        incidencias = list(incidencias)
         incidencias = sorted(
             incidencias,
             key=lambda item: (item.matricula_display.lower(), item.id),
             reverse=reverse_order,
         )
-    elif sort_by == "tipo":
-        incidencias = sorted(
-            incidencias,
-            key=lambda item: (item.tipo.lower(), item.id),
-            reverse=reverse_order,
-        )
-    elif sort_by == "detalle":
-        incidencias = sorted(
-            incidencias,
-            key=lambda item: (item.detalle.lower(), item.id),
-            reverse=reverse_order,
-        )
     else:
-        incidencias = sorted(
-            incidencias,
-            key=lambda item: (item.get_estado_display().lower(), item.id),
-            reverse=reverse_order,
+        campos_orden_db = {
+            "fecha": "fecha_incidencia",
+            "tipo": "tipo",
+            "detalle": "detalle",
+            "estado": "estado",
+        }
+        campo_orden = campos_orden_db.get(sort_by, "fecha_incidencia")
+        prefijo = "" if sort_dir == "asc" else "-"
+        incidencias = incidencias.order_by(
+            f"{prefijo}{campo_orden}", "id" if sort_dir == "asc" else "-id"
         )
 
     siguiente_direccion = {}
