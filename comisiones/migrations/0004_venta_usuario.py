@@ -8,14 +8,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comisiones', '0003_remove_perfil_marca_remove_perfil_modelo_and_more'),
+        ("comisiones", "0003_remove_perfil_marca_remove_perfil_modelo_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='venta',
-            name='usuario',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='ventas', to=settings.AUTH_USER_MODEL),
+            model_name="venta",
+            name="usuario",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="ventas",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

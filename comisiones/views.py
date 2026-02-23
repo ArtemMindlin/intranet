@@ -137,9 +137,7 @@ def _build_empty_pdf_bytes():
 def descargar_boletin_mock(request, boletin_id):
     pdf_bytes = _build_empty_pdf_bytes()
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    response["Content-Disposition"] = (
-        f'attachment; filename="boletin_{boletin_id}.pdf"'
-    )
+    response["Content-Disposition"] = f'attachment; filename="boletin_{boletin_id}.pdf"'
     return response
 
 
@@ -265,18 +263,18 @@ def mis_ventas(request):
             siguiente_direccion[campo] = "asc"
 
     ventas = list(ventas_qs)
-    total_comision_aprobada = (
-        Comision.objects.filter(venta__in=ventas_qs, estado="aprobada").aggregate(
-            total=Sum("monto")
-        )["total"]
-    )
+    total_comision_aprobada = Comision.objects.filter(
+        venta__in=ventas_qs, estado="aprobada"
+    ).aggregate(total=Sum("monto"))["total"]
     comision_aprobada = (
-        f"{total_comision_aprobada:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        f"{total_comision_aprobada:,.2f}".replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
         if total_comision_aprobada is not None
         else ""
     )
-    comision_aprobada_disponible = (
-        comision_aprobada is not None and bool(str(comision_aprobada).strip())
+    comision_aprobada_disponible = comision_aprobada is not None and bool(
+        str(comision_aprobada).strip()
     )
 
     # Garantiza perfil para usuarios antiguos que se crearon antes de esta lógica.
@@ -473,7 +471,9 @@ def mis_comunicaciones(request):
         },
     ]
 
-    comunicaciones = sorted(comunicaciones, key=lambda item: item["fecha"], reverse=True)
+    comunicaciones = sorted(
+        comunicaciones, key=lambda item: item["fecha"], reverse=True
+    )
     comunicaciones_periodo = comunicaciones
     if fecha_desde_date:
         comunicaciones_periodo = [
@@ -515,7 +515,9 @@ def mis_comunicaciones(request):
     reverse_order = sort_dir == "desc"
     if sort_by == "fecha":
         comunicaciones_filtradas = sorted(
-            comunicaciones_filtradas, key=lambda item: item["fecha"], reverse=reverse_order
+            comunicaciones_filtradas,
+            key=lambda item: item["fecha"],
+            reverse=reverse_order,
         )
     else:
         comunicaciones_filtradas = sorted(
@@ -545,6 +547,35 @@ def mis_comunicaciones(request):
         "comunicaciones": comunicaciones_filtradas,
     }
     return render(request, "comisiones/mis_comunicaciones.html", context)
+
+
+def _render_pagina_boletin_simple(request, template_name):
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    context = {
+        **_contexto_base_usuario(request, perfil),
+        "ultima_conexion": request.user.last_login,
+    }
+    return render(request, template_name, context)
+
+
+@login_required
+def normativas(request):
+    return _render_pagina_boletin_simple(request, "comisiones/normativas.html")
+
+
+@login_required
+def manuales(request):
+    return _render_pagina_boletin_simple(request, "comisiones/manuales.html")
+
+
+@login_required
+def avisos_sin_leer(request):
+    return _render_pagina_boletin_simple(request, "comisiones/avisos_sin_leer.html")
+
+
+@login_required
+def vehiculos_en_uso(request):
+    return _render_pagina_boletin_simple(request, "comisiones/vehiculos_en_uso.html")
 
 
 @login_required
@@ -748,9 +779,7 @@ def comisiones_gerencia(request):
     filas = []
     for venta in ventas_qs.order_by("-fecha_venta", "-id"):
         nombre_empleado = (
-            venta.usuario.get_full_name().strip()
-            if venta.usuario
-            else ""
+            venta.usuario.get_full_name().strip() if venta.usuario else ""
         ) or (venta.usuario.username if venta.usuario else "Sin empleado")
         filas.append(
             {
@@ -815,9 +844,9 @@ def incidencias_gerencia(request):
     incidencias = []
     for incidencia in incidencias_qs:
         usuario = incidencia.reportado_por
-        nombre_empleado = (
-            usuario.get_full_name().strip() if usuario else ""
-        ) or (usuario.username if usuario else "Sin asignar")
+        nombre_empleado = (usuario.get_full_name().strip() if usuario else "") or (
+            usuario.username if usuario else "Sin asignar"
+        )
         incidencias.append(
             {
                 "empleado": nombre_empleado,

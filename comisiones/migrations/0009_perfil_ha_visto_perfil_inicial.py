@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comisiones', '0008_comision_comision_financiera_comision_facturacion_and_more'),
+        (
+            "comisiones",
+            "0008_comision_comision_financiera_comision_facturacion_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='perfil',
-            name='ha_visto_perfil_inicial',
+            model_name="perfil",
+            name="ha_visto_perfil_inicial",
             field=models.BooleanField(default=False),
         ),
     ]

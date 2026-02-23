@@ -6,26 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comisiones', '0002_perfil'),
+        ("comisiones", "0002_perfil"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='perfil',
-            name='marca',
+            model_name="perfil",
+            name="marca",
         ),
         migrations.RemoveField(
-            model_name='perfil',
-            name='modelo',
+            model_name="perfil",
+            name="modelo",
         ),
         migrations.AddField(
-            model_name='perfil',
-            name='foto_perfil',
-            field=models.ImageField(blank=True, null=True, upload_to='perfiles/'),
+            model_name="perfil",
+            name="foto_perfil",
+            field=models.ImageField(blank=True, null=True, upload_to="perfiles/"),
         ),
         migrations.AlterField(
-            model_name='perfil',
-            name='sede',
-            field=models.CharField(blank=True, default='', max_length=100),
+            model_name="perfil",
+            name="sede",
+            field=models.CharField(blank=True, default="", max_length=100),
         ),
     ]

@@ -8,32 +8,80 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Venta',
+            name="Venta",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('matricula', models.CharField(max_length=10)),
-                ('idv', models.IntegerField()),
-                ('tipo_venta', models.CharField(choices=[('EXENTA', 'Venta Detall Exenta'), ('RENTING', 'Venta Renting'), ('PARTICULAR', 'Venta Detall Particular')], max_length=20)),
-                ('ud_financiadas', models.PositiveIntegerField(blank=True, null=True)),
-                ('dni', models.CharField(max_length=12)),
-                ('tipo_cliente', models.CharField(choices=[('CIF', 'CIF (Flotas)'), ('NIF', 'NIF (Particular)')], max_length=3)),
-                ('nombre_cliente', models.CharField(max_length=100)),
-                ('fecha_venta', models.DateField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("matricula", models.CharField(max_length=10)),
+                ("idv", models.IntegerField()),
+                (
+                    "tipo_venta",
+                    models.CharField(
+                        choices=[
+                            ("EXENTA", "Venta Detall Exenta"),
+                            ("RENTING", "Venta Renting"),
+                            ("PARTICULAR", "Venta Detall Particular"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("ud_financiadas", models.PositiveIntegerField(blank=True, null=True)),
+                ("dni", models.CharField(max_length=12)),
+                (
+                    "tipo_cliente",
+                    models.CharField(
+                        choices=[("CIF", "CIF (Flotas)"), ("NIF", "NIF (Particular)")],
+                        max_length=3,
+                    ),
+                ),
+                ("nombre_cliente", models.CharField(max_length=100)),
+                ("fecha_venta", models.DateField(auto_now_add=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Comision',
+            name="Comision",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('monto', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('estado', models.CharField(choices=[('pendiente', 'Pendiente'), ('aprobada', 'Aprobada'), ('rechazada', 'Rechazada')], default='pendiente', max_length=10)),
-                ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
-                ('venta', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='comisiones.venta')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("monto", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "estado",
+                    models.CharField(
+                        choices=[
+                            ("pendiente", "Pendiente"),
+                            ("aprobada", "Aprobada"),
+                            ("rechazada", "Rechazada"),
+                        ],
+                        default="pendiente",
+                        max_length=10,
+                    ),
+                ),
+                ("fecha_creacion", models.DateTimeField(auto_now_add=True)),
+                (
+                    "venta",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="comisiones.venta",
+                    ),
+                ),
             ],
         ),
     ]

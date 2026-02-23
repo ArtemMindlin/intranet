@@ -4,7 +4,13 @@ from .models import Venta, Comision, Perfil, Incidencia
 
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ("matricula", "nombre_cliente", "usuario", "tipo_venta", "fecha_venta")
+    list_display = (
+        "matricula",
+        "nombre_cliente",
+        "usuario",
+        "tipo_venta",
+        "fecha_venta",
+    )
     list_filter = ("tipo_venta", "tipo_cliente", "fecha_venta")
     search_fields = ("matricula", "idv", "dni", "nombre_cliente", "usuario__username")
 

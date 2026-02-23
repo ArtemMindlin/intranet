@@ -6,43 +6,57 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comisiones', '0007_perfil_director_comercial_perfil_gerente_and_more'),
+        ("comisiones", "0007_perfil_director_comercial_perfil_gerente_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='comision',
-            name='comision_financiera',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+            model_name="comision",
+            name="comision_financiera",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=12, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='comision',
-            name='facturacion',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+            model_name="comision",
+            name="facturacion",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=12, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='comision',
-            name='imp_comision',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+            model_name="comision",
+            name="imp_comision",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=12, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='comision',
-            name='imp_costo',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+            model_name="comision",
+            name="imp_costo",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=12, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='comision',
-            name='margen_bruto',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+            model_name="comision",
+            name="margen_bruto",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=12, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='comision',
-            name='seguros',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+            model_name="comision",
+            name="seguros",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=12, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='comision',
-            name='total_beneficio',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+            model_name="comision",
+            name="total_beneficio",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=12, null=True
+            ),
         ),
     ]

@@ -17,11 +17,16 @@ urlpatterns = [
     path("mis_ventas/", views.mis_ventas, name="mis_ventas"),
     # Vistas de incidencias del comercial.
     path("mis_incidencias/", views.mis_incidencias, name="mis_incidencias"),
+    path("boletin/", views.mis_comunicaciones, name="boletin"),
     path(
         "mis_comunicaciones/",
         views.mis_comunicaciones,
         name="mis_comunicaciones",
     ),
+    path("normativas/", views.normativas, name="normativas"),
+    path("manuales/", views.manuales, name="manuales"),
+    path("avisos_sin_leer/", views.avisos_sin_leer, name="avisos_sin_leer"),
+    path("vehiculos_en_uso/", views.vehiculos_en_uso, name="vehiculos_en_uso"),
     path(
         "mis_comunicaciones/boletin/<int:boletin_id>/descargar/",
         views.descargar_boletin_mock,
