@@ -1,7 +1,8 @@
 ﻿from calendar import monthrange
 from datetime import date
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, CharField
+from django.db.models.functions import Cast
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -133,6 +134,20 @@ def _build_empty_pdf_bytes():
     return bytes(pdf)
 
 
+# Función auxiliar para obtener valores únicos y no vacíos de una lista, preservando el orden original. Esto se utiliza en la generación de opciones para los filtros de búsqueda en la vista de ventas del comercial.
+def _unique_non_empty(values):
+    seen = set()
+    result = []
+    for value in values:
+        if value in (None, ""):
+            continue
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
 @login_required
 def descargar_boletin_mock(request, boletin_id):
     pdf_bytes = _build_empty_pdf_bytes()
@@ -151,40 +166,80 @@ def descargar_boletin_mock(request, boletin_id):
 @login_required
 def mis_ventas(request):
 
-    def _unique_non_empty(values):
-        seen = set()
-        result = []
-        for value in values:
-            if value in (None, ""):
-                continue
-            if value in seen:
-                continue
-            seen.add(value)
-            result.append(value)
-        return result
-
+    # Por defecto se muestra el mes actual
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
-        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
 
+    # Se obtienen las ventas del usuario en el rango de fechas seleccionado, aplicando filtros y ordenamientos según los parámetros de la consulta.
     ventas_periodo_qs = Venta.objects.filter(usuario=request.user)
     if fecha_desde_date:
         ventas_periodo_qs = ventas_periodo_qs.filter(fecha_venta__gte=fecha_desde_date)
     if fecha_hasta_date:
         ventas_periodo_qs = ventas_periodo_qs.filter(fecha_venta__lte=fecha_hasta_date)
     ventas_periodo_qs = ventas_periodo_qs.order_by("-fecha_venta", "-id")
-    ventas_periodo = list(ventas_periodo_qs)
+    # ventas_periodo = list(ventas_periodo_qs)
 
-    matriculas_opciones = _unique_non_empty(venta.matricula for venta in ventas_periodo)
-    idv_opciones = _unique_non_empty(str(venta.idv) for venta in ventas_periodo)
-    tipo_venta_codes = _unique_non_empty(venta.tipo_venta for venta in ventas_periodo)
-    dni_opciones = _unique_non_empty(venta.dni for venta in ventas_periodo)
-    tipo_cliente_codes = _unique_non_empty(
-        venta.tipo_cliente for venta in ventas_periodo
+    # Se generan las opciones únicas para los filtros de búsqueda en base a las ventas obtenidas, asegurando que no haya valores vacíos ni duplicados.
+
+    matriculas_opciones = list(
+        ventas_periodo_qs.exclude(matricula__isnull=True)
+        .exclude(matricula="")
+        .values_list("matricula", flat=True)
+        .distinct()
+        .order_by("matricula")
     )
-    nombre_cliente_opciones = _unique_non_empty(
-        venta.nombre_cliente for venta in ventas_periodo
+
+    idv_opciones = list(
+        ventas_periodo_qs.exclude(idv__isnull=True)
+        .annotate(idv_str=Cast("idv", output_field=CharField()))
+        .values_list("idv_str", flat=True)
+        .distinct()
+        .order_by("idv_str")
     )
+
+    tipo_venta_codes = list(
+        ventas_periodo_qs.exclude(tipo_venta__isnull=True)
+        .exclude(tipo_venta="")
+        .values_list("tipo_venta", flat=True)
+        .distinct()
+        .order_by("tipo_venta")
+    )
+
+    dni_opciones = list(
+        ventas_periodo_qs.exclude(dni__isnull=True)
+        .exclude(dni="")
+        .values_list("dni", flat=True)
+        .distinct()
+        .order_by("dni")
+    )
+
+    tipo_cliente_codes = list(
+        ventas_periodo_qs.exclude(tipo_cliente__isnull=True)
+        .exclude(tipo_cliente="")
+        .values_list("tipo_cliente", flat=True)
+        .distinct()
+        .order_by("tipo_cliente")
+    )
+
+    nombre_cliente_opciones = list(
+        ventas_periodo_qs.exclude(nombre_cliente__isnull=True)
+        .exclude(nombre_cliente="")
+        .values_list("nombre_cliente", flat=True)
+        .distinct()
+        .order_by("nombre_cliente")
+    )
+
+    # matriculas_opciones = _unique_non_empty(venta.matricula for venta in ventas_periodo)
+    # idv_opciones = _unique_non_empty(str(venta.idv) for venta in ventas_periodo)
+    # tipo_venta_codes = _unique_non_empty(venta.tipo_venta for venta in ventas_periodo)
+    # dni_opciones = _unique_non_empty(venta.dni for venta in ventas_periodo)
+    # tipo_cliente_codes = _unique_non_empty(
+    #     venta.tipo_cliente for venta in ventas_periodo
+    # )
+    # nombre_cliente_opciones = _unique_non_empty(
+    #     venta.nombre_cliente for venta in ventas_periodo
+    # )
 
     tipo_venta_dict = dict(Venta.TIPO_VENTA_CHOICES)
     tipo_cliente_dict = dict(Venta.TIPO_CLIENTE_CHOICES)
@@ -307,18 +362,6 @@ def mis_ventas(request):
 
 @login_required
 def mis_incidencias(request):
-
-    def _unique_non_empty(values):
-        seen = set()
-        result = []
-        for value in values:
-            if value in (None, ""):
-                continue
-            if value in seen:
-                continue
-            seen.add(value)
-            result.append(value)
-        return result
 
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
         request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
