@@ -27,7 +27,7 @@
 .inc-filters select {
     width: 100%;
     height: 36px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     background: #fff;
     padding: 6px 10px;
     font-size: 15px;
@@ -61,7 +61,7 @@
 .sort-icon-btn {
     width: 20px;
     height: 20px;
-    border: 1px solid #b6b6b6;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 50%;
     background: #fff;
     color: #333;
@@ -82,15 +82,15 @@
 }
 
 .sort-icon-btn.active {
-    border-color: #6f8f84;
-    background: #dfe9e4;
+    border-color: #9d9d9d;
+    background: #e7e7e7;
     color: #1f1f1f;
 }
 
 .communications-wrap {
-    border: none;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     background: #f8f8f8;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: none;
     border-radius: 0 0 14px 14px;
     padding: 14px;
 }

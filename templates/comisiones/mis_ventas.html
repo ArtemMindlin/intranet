@@ -7,12 +7,14 @@
     <title>Comisiones - Mis Ventas</title>
     <link rel="stylesheet" href="{% static 'css/mis_ventas.css' %}">
 </head>
-<body>
+<body class="mis-ventas-page">
     <div class="page">
         <header class="top">
             <div class="brand">
-                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoci&oacute;n">
             </div>
+
+                        <h1 class="page-title">Portal de comisiones</h1>
 
             <div class="user-panel">
                 <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
@@ -25,27 +27,33 @@
                         <div class="meta-row">{{ usuario_nombre }}</div>
                         <div class="meta-row">{{ usuario_login }}</div>
                         <div class="meta-row">{{ sede }}</div>
-                        <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                        <div class="last-login">Ult. conexi&oacute;n: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
                     </div>
                 </a>
                 <form class="header-logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'login' %}">
-                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                    <button class="header-logout-btn" type="submit">Cerrar sesi&oacute;n</button>
                 </form>
             </div>
+                    
         </header>
-
-        <h1 class="page-title">Portal de comisiones</h1>
 
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}" class="active">Mis Ventas</a>
             <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
-            <a href="{% url 'boletin' %}">Boletin</a>
-            <a href="{% url 'normativas' %}">Normativas</a>
-            <a href="{% url 'manuales' %}">Manuales</a>
-            <a href="{% url 'avisos_sin_leer' %}">Avisos sin leer</a>
-            <a href="{% url 'vehiculos_en_uso' %}">Vehiculos en uso</a>
+            <div class="nav-more">
+                <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
+                    M&aacute;s
+                </button>
+                <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
+                    <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
+                    <a href="{% url 'normativas' %}" role="menuitem">Normativas</a>
+                    <a href="{% url 'manuales' %}" role="menuitem">Manuales</a>
+                    <a href="{% url 'avisos_sin_leer' %}" role="menuitem">Avisos sin leer</a>
+                    <a href="{% url 'vehiculos_en_uso' %}" role="menuitem">Vehiculos en uso</a>
+                </div>
+            </div>
         </nav>
 
         <div class="breadcrumb"></div>
@@ -58,8 +66,8 @@
             </article>
 
             <aside class="actions">
-                <div class="action"><span class="ok">✓</span>Validar comisiones</div>
-                <a class="action" href="{% url 'registrar_incidencia' %}"><span class="warn">✕</span>Registrar incidencia</a>
+                <div class="action"><span class="ok">&#10003;</span>Validar comisiones</div>
+                <a class="action" href="{% url 'registrar_incidencia' %}"><span class="warn">&#10005;</span>Registrar incidencia</a>
             </aside>
         </section>
 
@@ -68,195 +76,294 @@
                 <h3>Filtros</h3>
                 <input type="hidden" name="sort" value="{{ sort_by }}">
                 <input type="hidden" name="dir" value="{{ sort_dir }}">
-                <div class="field">
-                    <label for="desde">Desde</label>
-                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
+                <div class="filter-accordion is-open">
+                    <button
+                        type="button"
+                        class="filter-accordion__header"
+                        aria-expanded="true"
+                        aria-controls="filtros-periodo-content"
+                    >
+                        <span>Periodo</span>
+                        <span class="filter-accordion__icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-accordion__content" id="filtros-periodo-content">
+                        <div class="filter-group">
+                            <div class="field">
+                                <label for="desde">Desde</label>
+                                <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
+                            </div>
+                            <div class="field">
+                                <label for="hasta">Hasta</label>
+                                <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="field">
-                    <label for="hasta">Hasta</label>
-                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+
+                <div class="filter-accordion">
+                    <button
+                        type="button"
+                        class="filter-accordion__header"
+                        aria-expanded="false"
+                        aria-controls="filtros-vehiculo-content"
+                    >
+                        <span>Veh&iacute;culo / Matr&iacute;cula</span>
+                        <span class="filter-accordion__icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-accordion__content" id="filtros-vehiculo-content">
+                        <div class="filter-group">
+                            <div class="field">
+                                <label for="matricula">Matr&iacute;cula</label>
+                                <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
+                                <datalist id="matricula-opciones">
+                                    {% for opcion in matriculas_opciones %}
+                                    <option value="{{ opcion }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="field">
+                                <label for="idv">IDV</label>
+                                <input id="idv" name="idv" list="idv-opciones" value="{{ filtros.idv }}" autocomplete="off">
+                                <datalist id="idv-opciones">
+                                    {% for opcion in idv_opciones %}
+                                    <option value="{{ opcion }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="field">
+                                <label for="tipo_venta">Tipo venta</label>
+                                <input id="tipo_venta" name="tipo_venta" list="tipo-venta-opciones" value="{{ filtros.tipo_venta }}" autocomplete="off">
+                                <datalist id="tipo-venta-opciones">
+                                    {% for opcion in tipo_venta_opciones %}
+                                    <option value="{{ opcion.value }}">{{ opcion.label }}</option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="field">
-                    <label for="matricula">Matrícula</label>
-                    <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
-                    <datalist id="matricula-opciones">
-                        {% for opcion in matriculas_opciones %}
-                        <option value="{{ opcion }}"></option>
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div class="field">
-                    <label for="idv">IDV</label>
-                    <input id="idv" name="idv" list="idv-opciones" value="{{ filtros.idv }}" autocomplete="off">
-                    <datalist id="idv-opciones">
-                        {% for opcion in idv_opciones %}
-                        <option value="{{ opcion }}"></option>
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div class="field">
-                    <label for="tipo_venta">Tipo venta</label>
-                    <input id="tipo_venta" name="tipo_venta" list="tipo-venta-opciones" value="{{ filtros.tipo_venta }}" autocomplete="off">
-                    <datalist id="tipo-venta-opciones">
-                        {% for opcion in tipo_venta_opciones %}
-                        <option value="{{ opcion.value }}">{{ opcion.label }}</option>
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div class="field">
-                    <label for="dni">DNI</label>
-                    <input id="dni" name="dni" list="dni-opciones" value="{{ filtros.dni }}" autocomplete="off">
-                    <datalist id="dni-opciones">
-                        {% for opcion in dni_opciones %}
-                        <option value="{{ opcion }}"></option>
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div class="field">
-                    <label for="tipo_cliente">Tipo de cliente</label>
-                    <select id="tipo_cliente" name="tipo_cliente">
-                        <option value="">Todos</option>
-                        {% for opcion in tipo_cliente_opciones %}
-                        <option value="{{ opcion.value }}" {% if filtros.tipo_cliente == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="nombre_cliente">Nombre de cliente</label>
-                    <input id="nombre_cliente" name="nombre_cliente" list="nombre-cliente-opciones" value="{{ filtros.nombre_cliente }}" autocomplete="off">
-                    <datalist id="nombre-cliente-opciones">
-                        {% for opcion in nombre_cliente_opciones %}
-                        <option value="{{ opcion }}"></option>
-                        {% endfor %}
-                    </datalist>
+
+                <div class="filter-accordion">
+                    <button
+                        type="button"
+                        class="filter-accordion__header"
+                        aria-expanded="false"
+                        aria-controls="filtros-cliente-content"
+                    >
+                        <span>Cliente</span>
+                        <span class="filter-accordion__icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="filter-accordion__content" id="filtros-cliente-content">
+                        <div class="filter-group">
+                            <div class="field">
+                                <label for="dni">DNI</label>
+                                <input id="dni" name="dni" list="dni-opciones" value="{{ filtros.dni }}" autocomplete="off">
+                                <datalist id="dni-opciones">
+                                    {% for opcion in dni_opciones %}
+                                    <option value="{{ opcion }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="field">
+                                <label for="tipo_cliente">Tipo de cliente</label>
+                                <select id="tipo_cliente" name="tipo_cliente">
+                                    <option value="">Todos</option>
+                                    {% for opcion in tipo_cliente_opciones %}
+                                    <option value="{{ opcion.value }}" {% if filtros.tipo_cliente == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="nombre_cliente">Nombre de cliente</label>
+                                <input id="nombre_cliente" name="nombre_cliente" list="nombre-cliente-opciones" value="{{ filtros.nombre_cliente }}" autocomplete="off">
+                                <datalist id="nombre-cliente-opciones">
+                                    {% for opcion in nombre_cliente_opciones %}
+                                    <option value="{{ opcion }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="field field-submit">
                     <button type="submit">Aplicar filtro</button>
                 </div>
             </form>
 
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Matricula</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'matricula' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=matricula&dir={{ siguiente_direccion.matricula }}"
-                                        aria-label="Ordenar por matricula"
-                                    >
-                                        {% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Fecha</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
-                                        aria-label="Ordenar por fecha"
-                                    >
-                                        {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>IDV</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'idv' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=idv&dir={{ siguiente_direccion.idv }}"
-                                        aria-label="Ordenar por idv"
-                                    >
-                                        {% if sort_by == 'idv' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Tipo venta</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'tipo_venta' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_venta&dir={{ siguiente_direccion.tipo_venta }}"
-                                        aria-label="Ordenar por tipo de venta"
-                                    >
-                                        {% if sort_by == 'tipo_venta' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>UD financiadas</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'ud_financiadas' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=ud_financiadas&dir={{ siguiente_direccion.ud_financiadas }}"
-                                        aria-label="Ordenar por unidades financiadas"
-                                    >
-                                        {% if sort_by == 'ud_financiadas' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>DNI</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'dni' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=dni&dir={{ siguiente_direccion.dni }}"
-                                        aria-label="Ordenar por dni"
-                                    >
-                                        {% if sort_by == 'dni' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Tipo cliente</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'tipo_cliente' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_cliente&dir={{ siguiente_direccion.tipo_cliente }}"
-                                        aria-label="Ordenar por tipo de cliente"
-                                    >
-                                        {% if sort_by == 'tipo_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Nombre cliente</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'nombre_cliente' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=nombre_cliente&dir={{ siguiente_direccion.nombre_cliente }}"
-                                        aria-label="Ordenar por nombre de cliente"
-                                    >
-                                        {% if sort_by == 'nombre_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for venta in ventas %}
-                        <tr>
-                            <td class="bold">{{ venta.matricula }}</td>
-                            <td class="center">{{ venta.fecha_venta|date:"d/m/Y" }}</td>
-                            <td class="center">{{ venta.idv }}</td>
-                            <td>{{ venta.get_tipo_venta_display }}</td>
-                            <td class="center">{{ venta.ud_financiadas }}</td>
-                            <td class="center">{{ venta.dni }}</td>
-                            <td class="center">{{ venta.get_tipo_cliente_display }}</td>
-                            <td>{{ venta.nombre_cliente }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="center">Sin ventas para el periodo seleccionado.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <section class="results-panel" aria-live="polite">
+                <div class="results-head">
+                    <h2 class="results-title">
+                        Resultados
+                        <span class="results-count">({{ total_resultados }})</span>
+                    </h2>
+                    {% if total_resultados > 0 %}
+                    <p class="results-meta">
+                        Mostrando <strong id="results-visible-count">{{ initial_visible_count }}</strong> de {{ total_resultados }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                {% if active_filters %}
+                <div class="active-filters" aria-label="Filtros activos">
+                    <span class="active-filters-label">Filtros activos</span>
+                    {% for chip in active_filters %}
+                    <button
+                        type="button"
+                        class="filter-chip"
+                        data-clear-fields="{{ chip.fields|join:',' }}"
+                        aria-label="Eliminar filtro {{ chip.title }}"
+                    >
+                        <span>{{ chip.label }}</span>
+                        <span class="chip-remove" aria-hidden="true">&times;</span>
+                    </button>
+                    {% endfor %}
+                    <button type="button" class="clear-filters-btn" data-clear-all="true">
+                        Limpiar todos
+                    </button>
+                </div>
+                {% endif %}
+
+                {% if ventas %}
+                <div class="table-wrap">
+                    <table class="mis-ventas-results">
+                        <thead>
+                            <tr>
+                                <th class="is-primary-col">
+                                    <div class="th-sort-wrap">
+                                        <span>Matricula</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'matricula' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=matricula&dir={{ siguiente_direccion.matricula }}"
+                                            aria-label="Ordenar por matricula"
+                                        >
+                                            {% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-sort-wrap">
+                                        <span>Fecha</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
+                                            aria-label="Ordenar por fecha"
+                                        >
+                                            {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-sort-wrap">
+                                        <span>IDV</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'idv' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=idv&dir={{ siguiente_direccion.idv }}"
+                                            aria-label="Ordenar por idv"
+                                        >
+                                            {% if sort_by == 'idv' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-sort-wrap">
+                                        <span>Tipo venta</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'tipo_venta' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_venta&dir={{ siguiente_direccion.tipo_venta }}"
+                                            aria-label="Ordenar por tipo de venta"
+                                        >
+                                            {% if sort_by == 'tipo_venta' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-sort-wrap">
+                                        <span>UD financiadas</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'ud_financiadas' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=ud_financiadas&dir={{ siguiente_direccion.ud_financiadas }}"
+                                            aria-label="Ordenar por unidades financiadas"
+                                        >
+                                            {% if sort_by == 'ud_financiadas' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-sort-wrap">
+                                        <span>DNI</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'dni' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=dni&dir={{ siguiente_direccion.dni }}"
+                                            aria-label="Ordenar por dni"
+                                        >
+                                            {% if sort_by == 'dni' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-sort-wrap">
+                                        <span>Tipo cliente</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'tipo_cliente' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_cliente&dir={{ siguiente_direccion.tipo_cliente }}"
+                                            aria-label="Ordenar por tipo de cliente"
+                                        >
+                                            {% if sort_by == 'tipo_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-sort-wrap">
+                                        <span>Nombre cliente</span>
+                                        <a
+                                            class="sort-icon-btn{% if sort_by == 'nombre_cliente' %} active{% endif %}"
+                                            href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=nombre_cliente&dir={{ siguiente_direccion.nombre_cliente }}"
+                                            aria-label="Ordenar por nombre de cliente"
+                                        >
+                                            {% if sort_by == 'nombre_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                        </a>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas %}
+                            <tr data-result-row {% if forloop.counter > initial_visible_rows %}hidden{% endif %}>
+                                <td class="bold is-primary-col">{{ venta.matricula|default:"—" }}</td>
+                                <td class="center">{% if venta.fecha_venta %}{{ venta.fecha_venta|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                                <td class="center">{{ venta.idv|default_if_none:"—" }}</td>
+                                <td>{{ venta.get_tipo_venta_display|default:"—" }}</td>
+                                <td class="center">{{ venta.ud_financiadas|default_if_none:"—" }}</td>
+                                <td class="center">{{ venta.dni|default:"—" }}</td>
+                                <td class="center">{{ venta.get_tipo_cliente_display|default:"—" }}</td>
+                                <td>{{ venta.nombre_cliente|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if total_resultados > initial_visible_rows %}
+                <div class="results-footer">
+                    <button
+                        type="button"
+                        id="load-more-results"
+                        class="load-more-btn"
+                        data-page-size="{{ initial_visible_rows }}"
+                        aria-label="Cargar más resultados"
+                    >
+                        <span class="load-more-btn__text">Cargar m&aacute;s</span>
+                        <span class="load-more-btn__spinner" aria-hidden="true"></span>
+                    </button>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="empty-state" role="status" aria-live="polite">
+                    <h3 class="empty-state-title">No hay resultados</h3>
+                    <p class="empty-state-text">Prueba a ajustar los filtros o ampliar el periodo.</p>
+                    <a class="empty-state-action" href="{% url 'mis_ventas' %}">Limpiar filtros</a>
+                </div>
+                {% endif %}
+            </section>
         </section>
     </div>
 <script>
@@ -292,6 +399,24 @@
         hasta.addEventListener("change", syncDateLimits);
         syncDateLimits();
     })();
+
+    (function () {
+        const tableBody = document.querySelector(".mis-ventas-results tbody");
+        if (!tableBody) return;
+        const cells = tableBody.querySelectorAll("td");
+        cells.forEach((cell) => {
+            if (cell.querySelector("a, button, input, select, textarea, label")) return;
+            const text = cell.textContent.trim();
+            if (text === "" || /^none$/i.test(text) || /^null$/i.test(text) || /^undefined$/i.test(text)) {
+                cell.textContent = "—";
+            }
+        });
+    })();
+
 </script>
+    <script src="{% static 'js/filter_accordion.js' %}"></script>
+    <script src="{% static 'js/mis_ventas_results.js' %}"></script>
+    <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>
+

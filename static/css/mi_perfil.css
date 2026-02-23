@@ -19,7 +19,7 @@
 
 .profile-card {
     background: #f1f1f1;
-    border: 1px solid #d5d5d5;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 12px;
 }
 
@@ -75,8 +75,8 @@
 }
 
 .value-line {
-    background: #84948b;
-    color: #fff;
+    background: var(--color-bg-surface-strong);
+    color: #1f1f1f;
     padding: 7px 10px;
     font-size: 16px;
     font-weight: 700;
@@ -98,7 +98,7 @@
 .password input {
     width: 100%;
     height: 36px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 6px 10px;
     background: #fff;
     margin-bottom: 10px;

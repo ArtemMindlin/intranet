@@ -15,7 +15,7 @@
 
 .flash-message {
     padding: 9px 10px;
-    border: 1px solid #b9b9b9;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     background: #efefef;
     color: #2e2e2e;
     font-size: 14px;
@@ -60,7 +60,7 @@
 .inc-filters select {
     width: 100%;
     height: 36px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     background: #fff;
     padding: 6px 10px;
     font-size: 15px;
@@ -122,7 +122,7 @@
 }
 
 .pill {
-    border: 1px solid #333;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     color: #333;
     background: #fff;
 }
@@ -162,7 +162,7 @@
 .detail-kpi {
     padding: 6px 14px;
     background: #d0d0d0;
-    border: 1px solid #d4d4d4;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     min-height: 24px;
     display: flex;
     align-items: center;
@@ -179,7 +179,7 @@
 .detail-body {
     margin-bottom: 12px;
     background: #d0d0d0;
-    border: 1px solid #c6c6c6;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 14px;
 }
 
@@ -221,7 +221,7 @@
     text-decoration: none;
     font-size: 17px;
     font-weight: 900;
-    border: 1px solid #212121;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .nav-counter {
@@ -240,7 +240,7 @@
 
 .form-errors {
     margin-bottom: 10px;
-    border: 1px solid #d49a9a;
+    border: 1px solid rgba(212, 154, 154, 0.8);
     background: #f6dede;
     color: #6d1e1e;
     padding: 8px 10px;
@@ -256,7 +256,7 @@
 
 .reg-input {
     width: 100%;
-    border: 1px solid #c4c4c4;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     background: #fff;
     font-size: 15px;
     font-weight: 400;
@@ -270,7 +270,7 @@
 .reg-textarea {
     width: 100%;
     min-height: 320px;
-    border: 1px solid #c4c4c4;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     background: #fff;
     resize: vertical;
     font-size: 15px;
@@ -281,7 +281,7 @@
 
 .reg-textarea:focus,
 .reg-input:focus {
-    outline: 2px solid #94b09f;
+    outline: 2px solid var(--color-focus-ring);
     outline-offset: 0;
 }
 
@@ -292,7 +292,7 @@
 }
 
 .reg-btn {
-    border: 1px solid #7f8d86;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     background: #d0d0d0;
     color: #1f1f1f;
     padding: 8px 12px;

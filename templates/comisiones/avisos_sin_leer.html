@@ -14,6 +14,8 @@
                 <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
             </div>
 
+                        <h1 class="page-title">Portal de comisiones</h1>
+
             <div class="user-panel">
                 <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
                     {% if foto_perfil_url %}
@@ -34,21 +36,28 @@
                     <button class="header-logout-btn" type="submit">Cerrar sesion</button>
                 </form>
             </div>
+                    
         </header>
-
-        <h1 class="page-title">Portal de comisiones</h1>
 
         <nav class="nav">
             <a href="{% url 'mis_ventas' %}">Mis Ventas</a>
             <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
-            <a href="{% url 'boletin' %}">Boletin</a>
-            <a href="{% url 'normativas' %}">Normativas</a>
-            <a href="{% url 'manuales' %}">Manuales</a>
-            <a href="{% url 'avisos_sin_leer' %}" class="active">Avisos sin leer</a>
-            <a href="{% url 'vehiculos_en_uso' %}">Vehiculos en uso</a>
+            <div class="nav-more">
+                <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
+                    Más
+                </button>
+                <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
+                    <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
+                    <a href="{% url 'normativas' %}" role="menuitem">Normativas</a>
+                    <a href="{% url 'manuales' %}" role="menuitem">Manuales</a>
+                    <a href="{% url 'avisos_sin_leer' %}" role="menuitem" class="active">Avisos sin leer</a>
+                    <a href="{% url 'vehiculos_en_uso' %}" role="menuitem">Vehiculos en uso</a>
+                </div>
+            </div>
         </nav>
 
         <div class="breadcrumb"></div>
     </div>
+    <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>

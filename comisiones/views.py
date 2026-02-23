@@ -1,6 +1,8 @@
 ﻿from calendar import monthrange
 from datetime import date
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.db.models import Q, Sum, CharField
 from django.db.models.functions import Cast
 from django.http import HttpResponse
@@ -62,6 +64,14 @@ def _format_year_month(value):
         return ""
     year, month = value
     return f"{year:04d}-{month:02d}"
+
+
+def _format_year_month_label(value):
+    ym = _parse_year_month(value)
+    if not ym:
+        return value or ""
+    year, month = ym
+    return f"{month:02d}/{year:04d}"
 
 
 def _year_month_bounds(value):
@@ -156,11 +166,40 @@ def descargar_boletin_mock(request, boletin_id):
     return response
 
 
-# def _enviar_correo_nueva_incidencia(incidencia):
-#     """
-#     Envio de correo temporalmente desactivado.
-#     """
-#     pass
+def _enviar_correo_nueva_incidencia(incidencia):
+    destinatario = getattr(settings, "INCIDENCIAS_EMAIL_TO", "").strip()
+    if not destinatario:
+        destinatario = (
+            incidencia.reportado_por.email
+            if incidencia.reportado_por and incidencia.reportado_por.email
+            else "test@local.test"
+        )
+
+    usuario = (
+        incidencia.reportado_por.get_full_name().strip()
+        if incidencia.reportado_por
+        else ""
+    ) or (incidencia.reportado_por.username if incidencia.reportado_por else "Sin usuario")
+
+    asunto = f"Nueva incidencia registrada - {incidencia.matricula_display}"
+    cuerpo = (
+        "Se ha registrado una nueva incidencia.\n\n"
+        f"Usuario: {usuario}\n"
+        f"Fecha incidencia: {incidencia.fecha_incidencia:%d/%m/%Y}\n"
+        f"Matricula: {incidencia.matricula_display}\n"
+        f"Tipo: {incidencia.tipo}\n"
+        f"Estado: {incidencia.get_estado_display()}\n\n"
+        f"Detalle:\n{incidencia.detalle}\n"
+    )
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or "no-reply@local.test"
+
+    send_mail(
+        subject=asunto,
+        message=cuerpo,
+        from_email=from_email,
+        recipient_list=[destinatario],
+        fail_silently=False,
+    )
 
 
 @login_required
@@ -229,17 +268,6 @@ def mis_ventas(request):
         .distinct()
         .order_by("nombre_cliente")
     )
-
-    # matriculas_opciones = _unique_non_empty(venta.matricula for venta in ventas_periodo)
-    # idv_opciones = _unique_non_empty(str(venta.idv) for venta in ventas_periodo)
-    # tipo_venta_codes = _unique_non_empty(venta.tipo_venta for venta in ventas_periodo)
-    # dni_opciones = _unique_non_empty(venta.dni for venta in ventas_periodo)
-    # tipo_cliente_codes = _unique_non_empty(
-    #     venta.tipo_cliente for venta in ventas_periodo
-    # )
-    # nombre_cliente_opciones = _unique_non_empty(
-    #     venta.nombre_cliente for venta in ventas_periodo
-    # )
 
     tipo_venta_dict = dict(Venta.TIPO_VENTA_CHOICES)
     tipo_cliente_dict = dict(Venta.TIPO_CLIENTE_CHOICES)
@@ -318,6 +346,9 @@ def mis_ventas(request):
             siguiente_direccion[campo] = "asc"
 
     ventas = list(ventas_qs)
+    total_resultados = len(ventas)
+    initial_visible_rows = 25
+    initial_visible_count = min(total_resultados, initial_visible_rows)
     total_comision_aprobada = Comision.objects.filter(
         venta__in=ventas_qs, estado="aprobada"
     ).aggregate(total=Sum("monto"))["total"]
@@ -332,6 +363,45 @@ def mis_ventas(request):
         str(comision_aprobada).strip()
     )
 
+    current_month = _format_year_month((date.today().year, date.today().month))
+    active_filters = []
+    if (fecha_desde or fecha_hasta) and (
+        fecha_desde != current_month or fecha_hasta != current_month
+    ):
+        if fecha_desde and fecha_hasta:
+            period_value = (
+                f"{_format_year_month_label(fecha_desde)} - "
+                f"{_format_year_month_label(fecha_hasta)}"
+            )
+        else:
+            period_value = (
+                _format_year_month_label(fecha_desde)
+                if fecha_desde
+                else _format_year_month_label(fecha_hasta)
+            )
+        active_filters.append(
+            {
+                "title": "Periodo",
+                "label": f"Periodo: {period_value}",
+                "fields": ["desde", "hasta"],
+            }
+        )
+
+    filters_meta = (
+        ("matricula", "Matrícula"),
+        ("idv", "IDV"),
+        ("tipo_venta", "Tipo venta"),
+        ("dni", "DNI"),
+        ("tipo_cliente", "Tipo cliente"),
+        ("nombre_cliente", "Nombre cliente"),
+    )
+    for key, label in filters_meta:
+        value = filtros.get(key, "")
+        if value:
+            active_filters.append(
+                {"title": label, "label": f"{label}: {value}", "fields": [key]}
+            )
+
     # Garantiza perfil para usuarios antiguos que se crearon antes de esta lógica.
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
 
@@ -341,10 +411,14 @@ def mis_ventas(request):
         "ultima_conexion": request.user.last_login,
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
-        "total_ventas_periodo": len(ventas),
+        "total_ventas_periodo": total_resultados,
         "comision_aprobada_str": comision_aprobada,
         "comision_aprobada_disponible": comision_aprobada_disponible,
         "ventas": ventas,
+        "total_resultados": total_resultados,
+        "initial_visible_rows": initial_visible_rows,
+        "initial_visible_count": initial_visible_count,
+        "active_filters": active_filters,
         "filtros": filtros,
         "matriculas_opciones": matriculas_opciones,
         "idv_opciones": idv_opciones,
@@ -364,7 +438,7 @@ def mis_ventas(request):
 def mis_incidencias(request):
 
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
-        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
     incidencias_periodo_qs = Incidencia.objects.filter(
@@ -480,7 +554,7 @@ def mis_incidencias(request):
 def mis_comunicaciones(request):
     perfil, _ = Perfil.objects.get_or_create(user=request.user)
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
-        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
 
     comunicaciones = [
@@ -680,8 +754,7 @@ def registrar_incidencia(request):
                     usuario=request.user, matricula=form_data["matricula"]
                 )
                 incidencia.ventas.set(ventas_matricula)
-            # Envio de correo temporalmente desactivado.
-            # _enviar_correo_nueva_incidencia(incidencia)
+            _enviar_correo_nueva_incidencia(incidencia)
             return redirect("mis_incidencias")
 
     context = {
@@ -792,7 +865,7 @@ def comisiones_gerencia(request):
         return redirect("redirigir_por_rol")
 
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
-        request.GET.get("desde"), request.GET.get("hasta"), default_to_previous=True
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
     instalacion = request.GET.get("instalacion", "2901: Nissan Orihuela")
     vendedor = request.GET.get("vendedor", "Todos")

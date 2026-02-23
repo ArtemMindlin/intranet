@@ -1,6 +1,7 @@
 ﻿@import url("mis_ventas.css");
 
-.nav-gerencia a {
+.nav-gerencia > a,
+.nav-gerencia .nav-more-toggle {
     text-transform: uppercase;
 }
 
@@ -30,7 +31,7 @@
 .manager-filters select {
     width: 100%;
     height: 36px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 6px 10px;
     font-size: 15px;
     font-weight: 600;
@@ -131,7 +132,7 @@
     line-height: 1;
     vertical-align: middle;
     margin: 0 2px;
-    border: 1px solid #333;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     color: #333;
     background: #fff;
 }
@@ -163,7 +164,7 @@
 }
 
 .inc-matricula {
-    color: #41504a;
+    color: #4b4b4b;
     font-size: 13px;
 }
 
