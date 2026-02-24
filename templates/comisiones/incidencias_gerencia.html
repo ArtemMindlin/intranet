@@ -55,8 +55,6 @@
             </div>
         </nav>
 
-        <div class="breadcrumb"></div>
-
         <section class="manager-filters card">
             <form class="manager-filters-grid" method="get" id="gerencia-incidencias-filtros-form">
                 <div class="field">
@@ -82,9 +80,21 @@
         </section>
 
         <section class="manager-tools">
-            <div class="actions-inline">
-                <div class="action"><span class="ok">✓</span>Validar comisiones</div>
-                <div class="action"><span class="warn">✕</span>Registrar incidencia</div>
+            <div class="actions-inline acciones-comisiones">
+                <button
+                    type="button"
+                    class="btn btn-primary validar-comisiones"
+                    aria-label="Validar comisiones"
+                >
+                    Validar comisiones
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-outline-danger registrar-incidencia"
+                    aria-label="Registrar incidencia"
+                >
+                    Registrar incidencia
+                </button>
             </div>
             <div class="pending-box">
                 <span>Incidencias ptes. revisión</span>
@@ -178,3 +188,5 @@
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>
+
+

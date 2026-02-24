@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 {% load static %}
 <head>
@@ -7,14 +7,14 @@
     <title>Comisiones - Mis Incidencias</title>
     <link rel="stylesheet" href="{% static 'css/incidencias_personales.css' %}">
 </head>
-<body>
+<body class="mis-ventas-page mis-incidencias-page">
     <div class="page">
         <header class="top">
             <div class="brand">
-                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
             </div>
 
-                        <h1 class="page-title">Portal de comisiones</h1>
+            <h1 class="page-title">Portal de comisiones</h1>
 
             <div class="user-panel">
                 <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
@@ -23,20 +23,19 @@
                     {% else %}
                     <div class="avatar">{{ usuario_nombre|first|upper }}</div>
                     {% endif %}
-                    <div>
-                        <div class="meta-row">{{ usuario_nombre }}</div>
-                        <div class="meta-row">{{ usuario_login }}</div>
-                        <div class="meta-row">{{ sede }}</div>
-                        <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    <div class="user-info">
+                        <span class="user-info-item user-name">{{ usuario_nombre }}</span>
+                        <span class="user-info-item user-role">{{ usuario_login }}</span>
+                        <span class="user-info-item user-location">{{ sede }}</span>
+                        <span class="user-info-item user-last">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
                     </div>
                 </a>
                 <form class="header-logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'login' %}">
-                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                    <button class="header-logout-btn" type="submit">Cerrar sesion</button>
                 </form>
             </div>
-                    
         </header>
 
         <nav class="nav">
@@ -44,7 +43,7 @@
             <a href="{% url 'mis_incidencias' %}" class="active">Mis Incidencias</a>
             <div class="nav-more">
                 <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
-                    Más
+                    M&aacute;s
                 </button>
                 <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
                     <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
@@ -56,7 +55,6 @@
             </div>
         </nav>
 
-        <div class="breadcrumb"></div>
         {% if messages %}
         <section class="flash-messages">
             {% for message in messages %}
@@ -65,137 +63,227 @@
         </section>
         {% endif %}
 
-        <section class="inc-filters card">
-            <form method="get" class="inc-filters-grid" id="mis-incidencias-filtros-form">
-                <input type="hidden" name="sort" value="{{ sort_by }}">
-                <input type="hidden" name="dir" value="{{ sort_dir }}">
-                <div class="field">
-                    <label for="desde">Desde</label>
-                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
-                </div>
-                <div class="field">
-                    <label for="hasta">Hasta</label>
-                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
-                </div>
-                <div class="field">
-                    <label for="matricula">Matrícula</label>
-                    <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
-                    <datalist id="matricula-opciones">
-                        {% for opcion in matriculas_opciones %}
-                        <option value="{{ opcion }}"></option>
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div class="field">
-                    <label for="estado">Estado</label>
-                    <select id="estado" name="estado">
-                        <option value="">Todos</option>
-                        {% for opcion in estado_opciones %}
-                        <option value="{{ opcion.value }}" {% if filtros.estado == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="field field-submit">
-                    <button type="submit">Aplicar filtro</button>
-                </div>
-            </form>
-        </section>
+        <section class="content-topbar">
+            <button class="filters-toggle" type="button" aria-controls="filtersPanel" aria-expanded="true">
+                <span class="filters-toggle__icon" aria-hidden="true">&#9776;</span>
+                <span class="filters-toggle__label">Filtros</span>
+            </button>
 
-        <section class="inc-table-wrap">
-            <div class="table-wrap">
-                <table class="inc-table">
-                    <thead>
-                        <tr>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Matrícula</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'matricula' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=matricula&dir={{ siguiente_direccion.matricula }}"
-                                        aria-label="Ordenar por matrícula"
-                                    >
-                                        {% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Fecha incidencia</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
-                                        aria-label="Ordenar por fecha"
-                                    >
-                                        {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Tipo incidencia</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'tipo' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=tipo&dir={{ siguiente_direccion.tipo }}"
-                                        aria-label="Ordenar por tipo"
-                                    >
-                                        {% if sort_by == 'tipo' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Detalle incidencia</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'detalle' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=detalle&dir={{ siguiente_direccion.detalle }}"
-                                        aria-label="Ordenar por detalle"
-                                    >
-                                        {% if sort_by == 'detalle' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                            <th>Detalle</th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Estado</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'estado' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=estado&dir={{ siguiente_direccion.estado }}"
-                                        aria-label="Ordenar por estado"
-                                    >
-                                        {% if sort_by == 'estado' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
-                                </div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for incidencia in incidencias %}
-                        <tr>
-                            <td>{{ incidencia.matricula_display }}</td>
-                            <td class="center">{{ incidencia.fecha_incidencia|date:"d/m/Y" }}</td>
-                            <td>{{ incidencia.tipo }}</td>
-                            <td>{{ incidencia.detalle }}</td>
-                            <td class="center">
-                                <a
-                                    class="pill-link"
-                                    href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort={{ sort_by }}&dir={{ sort_dir }}"
-                                    aria-label="Ver detalle de incidencia"
-                                >
-                                    <span class="pill">+</span>
-                                </a>
-                            </td>
-                            <td class="center">{{ incidencia.get_estado_display }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="center">No hay incidencias para los filtros seleccionados.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="content-topbar__actions">
+                <aside class="actions acciones-comisiones">
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger registrar-incidencia"
+                        aria-label="Registrar incidencia"
+                        onclick="window.location.href='{% url 'registrar_incidencia' %}'"
+                    >
+                        Registrar incidencia
+                    </button>
+                </aside>
             </div>
         </section>
+
+        <section class="content main-layout">
+            <aside id="filtersPanel" class="filters-panel-shell" tabindex="-1">
+                <form method="get" class="filters filters-panel" id="mis-incidencias-filtros-form">
+                    <input type="hidden" name="sort" value="{{ sort_by }}">
+                    <input type="hidden" name="dir" value="{{ sort_dir }}">
+
+                    <div class="filter-accordion is-open">
+                        <button type="button" class="filter-accordion__header" aria-expanded="true" aria-controls="filtros-periodo-content">
+                            <span>Periodo</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-periodo-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="desde">Desde</label>
+                                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
+                                </div>
+                                <div class="field">
+                                    <label for="hasta">Hasta</label>
+                                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-accordion">
+                        <button type="button" class="filter-accordion__header" aria-expanded="false" aria-controls="filtros-matricula-content">
+                            <span>Vehiculo / Matricula</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-matricula-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="matricula">Matricula</label>
+                                    <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
+                                    <datalist id="matricula-opciones">
+                                        {% for opcion in matriculas_opciones %}
+                                        <option value="{{ opcion }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-accordion">
+                        <button type="button" class="filter-accordion__header" aria-expanded="false" aria-controls="filtros-estado-content">
+                            <span>Estado</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-estado-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="estado">Estado</label>
+                                    <select id="estado" name="estado" class="js-combobox" data-combobox-placeholder="Buscar estado...">
+                                        <option value="">Todos</option>
+                                        {% for opcion in estado_opciones %}
+                                        <option value="{{ opcion.value }}" {% if filtros.estado == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field field-submit">
+                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtro</button>
+                    </div>
+                </form>
+            </aside>
+
+            <section class="results-panel table-panel" aria-live="polite">
+                {% if total_resultados > 0 or active_filters %}
+                <div class="results-summary-row">
+                    {% if total_resultados > 0 %}
+                    <p class="results-meta">
+                        Mostrando <strong id="results-visible-count">{{ initial_visible_count }}</strong> de {{ total_resultados }}
+                    </p>
+                    {% endif %}
+
+                    {% if active_filters %}
+                    <div class="active-filters active-filters--classic" aria-label="Filtros activos">
+                        <span class="active-filters-label">Filtros activos</span>
+                        <div class="active-filters-chips">
+                            {% for chip in active_filters %}
+                            <button
+                                type="button"
+                                class="filter-chip"
+                                data-clear-fields="{{ chip.fields|join:',' }}"
+                                aria-label="Eliminar filtro {{ chip.title }}"
+                            >
+                                <span>{{ chip.label }}</span>
+                                <span class="chip-remove" aria-hidden="true">&times;</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="clear-filters-btn clear-filters-btn--classic" data-clear-all="true">
+                            Limpiar todos
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if incidencias %}
+                <div class="table-wrap">
+                    <table class="inc-table mis-incidencias-results table-incidencias">
+                        <thead>
+                            <tr>
+                                <th class="col-matricula th-sortable{% if sort_by == 'matricula' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'matricula' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Matricula</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'matricula' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=matricula&dir={{ siguiente_direccion.matricula }}" aria-label="Ordenar por matricula">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th class="col-fecha th-sortable{% if sort_by == 'fecha' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'fecha' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Fecha incidencia</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}" aria-label="Ordenar por fecha">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th class="col-tipo th-sortable{% if sort_by == 'tipo' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'tipo' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Tipo incidencia</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'tipo' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=tipo&dir={{ siguiente_direccion.tipo }}" aria-label="Ordenar por tipo">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'tipo' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th class="col-detalle-incidencia th-sortable{% if sort_by == 'detalle' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'detalle' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Detalle incidencia</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'detalle' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=detalle&dir={{ siguiente_direccion.detalle }}" aria-label="Ordenar por detalle">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'detalle' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th class="col-detalle-btn"><div class="th-sort-wrap"><span class="th-label">Detalle</span></div></th>
+                                <th class="col-estado th-sortable{% if sort_by == 'estado' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'estado' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Estado</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'estado' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort=estado&dir={{ siguiente_direccion.estado }}" aria-label="Ordenar por estado">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'estado' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for incidencia in incidencias %}
+                            <tr data-result-row {% if forloop.counter > initial_visible_rows %}hidden{% endif %}>
+                                <td class="is-primary-col col-matricula">{{ incidencia.matricula_display|default:"—" }}</td>
+                                <td class="center col-fecha">{{ incidencia.fecha_incidencia|date:"d/m/Y" }}</td>
+                                <td class="col-tipo">{{ incidencia.tipo|default:"—" }}</td>
+                                <td class="col-detalle-incidencia">{{ incidencia.detalle|default:"—" }}</td>
+                                <td class="center col-detalle-btn">
+                                    <a class="pill-link btn-detalle btn-detalle--view" href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort={{ sort_by }}&dir={{ sort_dir }}" aria-label="Ver detalle de incidencia">
+                                        <span class="btn-detalle__icon" aria-hidden="true">&#128065;</span>
+                                        <span class="btn-detalle__text">Ver</span>
+                                    </a>
+                                </td>
+                                <td class="center is-secondary-col col-estado">
+                                    {% with estado_txt=incidencia.get_estado_display|lower %}
+                                        {% if incidencia.estado == "pte_revision" or estado_txt == "pte. revision" or estado_txt == "pte. revisión" or estado_txt == "pendiente" or estado_txt == "pendiente revision" or estado_txt == "pendiente revisión" %}
+                                            <span class="status-badge status-badge--pending">{{ incidencia.get_estado_display }}</span>
+                                        {% elif incidencia.estado == "aceptada" or estado_txt == "resuelto" or estado_txt == "resuelta" %}
+                                            <span class="status-badge status-badge--success">{{ incidencia.get_estado_display }}</span>
+                                        {% elif incidencia.estado == "rechazada" %}
+                                            <span class="status-badge status-badge--danger">{{ incidencia.get_estado_display }}</span>
+                                        {% else %}
+                                            <span class="status-badge status-badge--neutral">{{ incidencia.get_estado_display }}</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if total_resultados > initial_visible_rows %}
+                <div class="results-footer">
+                    <button type="button" id="load-more-incidencias" class="load-more-btn" data-page-size="{{ initial_visible_rows }}" aria-label="Cargar mas incidencias">
+                        <span class="load-more-btn__text">Cargar mas</span>
+                        <span class="load-more-btn__spinner" aria-hidden="true"></span>
+                    </button>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="empty-state" role="status" aria-live="polite">
+                    <h3 class="empty-state-title">No hay resultados</h3>
+                    <p class="empty-state-text">Prueba a ajustar los filtros o ampliar el periodo.</p>
+                    <a class="empty-state-action" href="{% url 'mis_incidencias' %}">Limpiar filtros</a>
+                </div>
+                {% endif %}
+            </section>
+        </section>
+        <div class="filters-backdrop" aria-hidden="true"></div>
     </div>
     <script>
         (function () {
@@ -208,7 +296,6 @@
                 : window.performance &&
                   window.performance.navigation &&
                   window.performance.navigation.type === 1;
-
             if (isReload && window.location.search) {
                 window.location.replace(window.location.pathname);
             }
@@ -218,7 +305,6 @@
             const desde = document.getElementById("desde");
             const hasta = document.getElementById("hasta");
             if (!desde || !hasta) return;
-
             function syncDateLimits() {
                 hasta.min = desde.value || "";
                 desde.max = hasta.value || "";
@@ -231,6 +317,10 @@
             syncDateLimits();
         })();
     </script>
+    <script src="{% static 'js/filter_accordion.js' %}"></script>
+    <script src="{% static 'js/mis_incidencias_results.js' %}"></script>
+    <script src="{% static 'js/mis_incidencias_filters_toggle.js' %}"></script>
+    <script src="{% static 'js/registrar_incidencia_combobox.js' %}"></script>
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>

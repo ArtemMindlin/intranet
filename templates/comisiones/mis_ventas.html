@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 {% load static %}
 <head>
@@ -23,11 +23,11 @@
                     {% else %}
                     <div class="avatar">{{ usuario_nombre|first|upper }}</div>
                     {% endif %}
-                    <div>
-                        <div class="meta-row">{{ usuario_nombre }}</div>
-                        <div class="meta-row">{{ usuario_login }}</div>
-                        <div class="meta-row">{{ sede }}</div>
-                        <div class="last-login">Ult. conexi&oacute;n: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    <div class="user-info">
+                        <span class="user-info-item user-name">{{ usuario_nombre }}</span>
+                        <span class="user-info-item user-role">{{ usuario_login }}</span>
+                        <span class="user-info-item user-location">{{ sede }}</span>
+                        <span class="user-info-item user-last">Ult. conexi&oacute;n: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
                     </div>
                 </a>
                 <form class="header-logout-form" method="post" action="{% url 'logout' %}">
@@ -55,171 +55,201 @@
                 </div>
             </div>
         </nav>
-
-        <div class="breadcrumb"></div>
         
 
-        <section class="summary">
-            <article class="kpi">
-                <div class="label">Total ventas periodo</div>
-                <div class="value">{{ total_ventas_periodo }}</div>
-            </article>
+        <section class="content-topbar">
+            <button
+                class="filters-toggle"
+                type="button"
+                aria-controls="filtersPanel"
+                aria-expanded="true"
+            >
+                <span class="filters-toggle__icon" aria-hidden="true">&#9776;</span>
+                <span class="filters-toggle__label">Filtros</span>
+            </button>
+            <div class="content-topbar__kpi">
+                <article class="kpi-card">
+                    <div class="kpi-card__meta">
+                        <h2 class="kpi-card__title">Total ventas periodo</h2>
+                        <p class="kpi-card__subtitle">Ventas en el periodo seleccionado</p>
+                    </div>
+                    <div class="kpi-card__value" aria-label="Total ventas del periodo">
+                        {{ total_ventas_periodo }}
+                    </div>
+                </article>
+            </div>
 
-            <aside class="actions">
-                <div class="action"><span class="ok">&#10003;</span>Validar comisiones</div>
-                <a class="action" href="{% url 'registrar_incidencia' %}"><span class="warn">&#10005;</span>Registrar incidencia</a>
-            </aside>
+            <div class="content-topbar__actions">
+                <aside class="actions acciones-comisiones">
+                    <button
+                        type="button"
+                        class="btn btn-primary validar-comisiones"
+                        aria-label="Validar comisiones"
+                    >
+                        Validar comisiones
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger registrar-incidencia"
+                        aria-label="Registrar incidencia"
+                        onclick="window.location.href='{% url 'registrar_incidencia' %}'"
+                    >
+                        Registrar incidencia
+                    </button>
+                </aside>
+            </div>
         </section>
 
-        <section class="content">
-            <form class="filters" method="get" id="mis-ventas-filtros-form">
-                <h3>Filtros</h3>
-                <input type="hidden" name="sort" value="{{ sort_by }}">
-                <input type="hidden" name="dir" value="{{ sort_dir }}">
-                <div class="filter-accordion is-open">
-                    <button
-                        type="button"
-                        class="filter-accordion__header"
-                        aria-expanded="true"
-                        aria-controls="filtros-periodo-content"
-                    >
-                        <span>Periodo</span>
-                        <span class="filter-accordion__icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="filter-accordion__content" id="filtros-periodo-content">
-                        <div class="filter-group">
-                            <div class="field">
-                                <label for="desde">Desde</label>
-                                <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
-                            </div>
-                            <div class="field">
-                                <label for="hasta">Hasta</label>
-                                <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="filter-accordion">
-                    <button
-                        type="button"
-                        class="filter-accordion__header"
-                        aria-expanded="false"
-                        aria-controls="filtros-vehiculo-content"
-                    >
-                        <span>Veh&iacute;culo / Matr&iacute;cula</span>
-                        <span class="filter-accordion__icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="filter-accordion__content" id="filtros-vehiculo-content">
-                        <div class="filter-group">
-                            <div class="field">
-                                <label for="matricula">Matr&iacute;cula</label>
-                                <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
-                                <datalist id="matricula-opciones">
-                                    {% for opcion in matriculas_opciones %}
-                                    <option value="{{ opcion }}"></option>
-                                    {% endfor %}
-                                </datalist>
-                            </div>
-                            <div class="field">
-                                <label for="idv">IDV</label>
-                                <input id="idv" name="idv" list="idv-opciones" value="{{ filtros.idv }}" autocomplete="off">
-                                <datalist id="idv-opciones">
-                                    {% for opcion in idv_opciones %}
-                                    <option value="{{ opcion }}"></option>
-                                    {% endfor %}
-                                </datalist>
-                            </div>
-                            <div class="field">
-                                <label for="tipo_venta">Tipo venta</label>
-                                <input id="tipo_venta" name="tipo_venta" list="tipo-venta-opciones" value="{{ filtros.tipo_venta }}" autocomplete="off">
-                                <datalist id="tipo-venta-opciones">
-                                    {% for opcion in tipo_venta_opciones %}
-                                    <option value="{{ opcion.value }}">{{ opcion.label }}</option>
-                                    {% endfor %}
-                                </datalist>
+        <section class="content main-layout">
+            <aside id="filtersPanel" class="filters-panel-shell" tabindex="-1">
+                <form class="filters filters-panel" method="get" id="mis-ventas-filtros-form">
+                    <input type="hidden" name="sort" value="{{ sort_by }}">
+                    <input type="hidden" name="dir" value="{{ sort_dir }}">
+                    <div class="filter-accordion is-open">
+                        <button
+                            type="button"
+                            class="filter-accordion__header"
+                            aria-expanded="true"
+                            aria-controls="filtros-periodo-content"
+                        >
+                            <span>Periodo</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-periodo-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="desde">Desde</label>
+                                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
+                                </div>
+                                <div class="field">
+                                    <label for="hasta">Hasta</label>
+                                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="filter-accordion">
-                    <button
-                        type="button"
-                        class="filter-accordion__header"
-                        aria-expanded="false"
-                        aria-controls="filtros-cliente-content"
-                    >
-                        <span>Cliente</span>
-                        <span class="filter-accordion__icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="filter-accordion__content" id="filtros-cliente-content">
-                        <div class="filter-group">
-                            <div class="field">
-                                <label for="dni">DNI</label>
-                                <input id="dni" name="dni" list="dni-opciones" value="{{ filtros.dni }}" autocomplete="off">
-                                <datalist id="dni-opciones">
-                                    {% for opcion in dni_opciones %}
-                                    <option value="{{ opcion }}"></option>
-                                    {% endfor %}
-                                </datalist>
-                            </div>
-                            <div class="field">
-                                <label for="tipo_cliente">Tipo de cliente</label>
-                                <select id="tipo_cliente" name="tipo_cliente">
-                                    <option value="">Todos</option>
-                                    {% for opcion in tipo_cliente_opciones %}
-                                    <option value="{{ opcion.value }}" {% if filtros.tipo_cliente == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label for="nombre_cliente">Nombre de cliente</label>
-                                <input id="nombre_cliente" name="nombre_cliente" list="nombre-cliente-opciones" value="{{ filtros.nombre_cliente }}" autocomplete="off">
-                                <datalist id="nombre-cliente-opciones">
-                                    {% for opcion in nombre_cliente_opciones %}
-                                    <option value="{{ opcion }}"></option>
-                                    {% endfor %}
-                                </datalist>
+                    <div class="filter-accordion">
+                        <button
+                            type="button"
+                            class="filter-accordion__header"
+                            aria-expanded="false"
+                            aria-controls="filtros-vehiculo-content"
+                        >
+                            <span>Veh&iacute;culo / Matr&iacute;cula</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-vehiculo-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="matricula">Matr&iacute;cula</label>
+                                    <input id="matricula" name="matricula" list="matricula-opciones" value="{{ filtros.matricula }}" autocomplete="off">
+                                    <datalist id="matricula-opciones">
+                                        {% for opcion in matriculas_opciones %}
+                                        <option value="{{ opcion }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <div class="field">
+                                    <label for="idv">IDV</label>
+                                    <input id="idv" name="idv" list="idv-opciones" value="{{ filtros.idv }}" autocomplete="off">
+                                    <datalist id="idv-opciones">
+                                        {% for opcion in idv_opciones %}
+                                        <option value="{{ opcion }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <div class="field">
+                                    <label for="tipo_venta">Tipo venta</label>
+                                    <input id="tipo_venta" name="tipo_venta" list="tipo-venta-opciones" value="{{ filtros.tipo_venta }}" autocomplete="off">
+                                    <datalist id="tipo-venta-opciones">
+                                        {% for opcion in tipo_venta_opciones %}
+                                        <option value="{{ opcion.value }}">{{ opcion.label }}</option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="field field-submit">
-                    <button type="submit">Aplicar filtro</button>
-                </div>
-            </form>
 
-            <section class="results-panel" aria-live="polite">
-                <div class="results-head">
-                    <h2 class="results-title">
-                        Resultados
-                        <span class="results-count">({{ total_resultados }})</span>
-                    </h2>
+                    <div class="filter-accordion">
+                        <button
+                            type="button"
+                            class="filter-accordion__header"
+                            aria-expanded="false"
+                            aria-controls="filtros-cliente-content"
+                        >
+                            <span>Cliente</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-cliente-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="dni">DNI</label>
+                                    <input id="dni" name="dni" list="dni-opciones" value="{{ filtros.dni }}" autocomplete="off">
+                                    <datalist id="dni-opciones">
+                                        {% for opcion in dni_opciones %}
+                                        <option value="{{ opcion }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <div class="field">
+                                    <label for="tipo_cliente">Tipo de cliente</label>
+                                    <select id="tipo_cliente" name="tipo_cliente" class="js-combobox" data-combobox-placeholder="Buscar tipo de cliente...">
+                                        <option value="">Todos</option>
+                                        {% for opcion in tipo_cliente_opciones %}
+                                        <option value="{{ opcion.value }}" {% if filtros.tipo_cliente == opcion.value %}selected{% endif %}>{{ opcion.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="nombre_cliente">Nombre de cliente</label>
+                                    <input id="nombre_cliente" name="nombre_cliente" list="nombre-cliente-opciones" value="{{ filtros.nombre_cliente }}" autocomplete="off">
+                                    <datalist id="nombre-cliente-opciones">
+                                        {% for opcion in nombre_cliente_opciones %}
+                                        <option value="{{ opcion }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field field-submit">
+                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtro</button>
+                    </div>
+                </form>
+            </aside>
+
+            <section class="results-panel table-panel" aria-live="polite">
+                {% if total_resultados > 0 or active_filters %}
+                <div class="results-summary-row">
                     {% if total_resultados > 0 %}
                     <p class="results-meta">
                         Mostrando <strong id="results-visible-count">{{ initial_visible_count }}</strong> de {{ total_resultados }}
                     </p>
                     {% endif %}
-                </div>
 
-                {% if active_filters %}
-                <div class="active-filters" aria-label="Filtros activos">
-                    <span class="active-filters-label">Filtros activos</span>
-                    {% for chip in active_filters %}
-                    <button
-                        type="button"
-                        class="filter-chip"
-                        data-clear-fields="{{ chip.fields|join:',' }}"
-                        aria-label="Eliminar filtro {{ chip.title }}"
-                    >
-                        <span>{{ chip.label }}</span>
-                        <span class="chip-remove" aria-hidden="true">&times;</span>
-                    </button>
-                    {% endfor %}
-                    <button type="button" class="clear-filters-btn" data-clear-all="true">
-                        Limpiar todos
-                    </button>
+                    {% if active_filters %}
+                    <div class="active-filters active-filters--classic" aria-label="Filtros activos">
+                        <span class="active-filters-label">Filtros activos</span>
+                        <div class="active-filters-chips">
+                            {% for chip in active_filters %}
+                            <button
+                                type="button"
+                                class="filter-chip"
+                                data-clear-fields="{{ chip.fields|join:',' }}"
+                                aria-label="Eliminar filtro {{ chip.title }}"
+                            >
+                                <span>{{ chip.label }}</span>
+                                <span class="chip-remove" aria-hidden="true">&times;</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="clear-filters-btn clear-filters-btn--classic" data-clear-all="true">
+                            Limpiar todos
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -228,99 +258,123 @@
                     <table class="mis-ventas-results">
                         <thead>
                             <tr>
-                                <th class="is-primary-col">
+                                <th
+                                    class="is-primary-col th-sortable{% if sort_by == 'matricula' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'matricula' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>Matricula</span>
+                                        <span class="th-label">Matricula</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'matricula' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=matricula&dir={{ siguiente_direccion.matricula }}"
                                             aria-label="Ordenar por matricula"
                                         >
-                                            {% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'matricula' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
-                                <th>
+                                <th
+                                    class="th-sortable{% if sort_by == 'fecha' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'fecha' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>Fecha</span>
+                                        <span class="th-label">Fecha</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
                                             aria-label="Ordenar por fecha"
                                         >
-                                            {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
-                                <th>
+                                <th
+                                    class="th-sortable{% if sort_by == 'idv' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'idv' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>IDV</span>
+                                        <span class="th-label">IDV</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'idv' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=idv&dir={{ siguiente_direccion.idv }}"
                                             aria-label="Ordenar por idv"
                                         >
-                                            {% if sort_by == 'idv' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'idv' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
-                                <th>
+                                <th
+                                    class="th-sortable{% if sort_by == 'tipo_venta' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'tipo_venta' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>Tipo venta</span>
+                                        <span class="th-label">Tipo venta</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'tipo_venta' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_venta&dir={{ siguiente_direccion.tipo_venta }}"
                                             aria-label="Ordenar por tipo de venta"
                                         >
-                                            {% if sort_by == 'tipo_venta' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'tipo_venta' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
-                                <th>
+                                <th
+                                    class="th-sortable{% if sort_by == 'ud_financiadas' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'ud_financiadas' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>UD financiadas</span>
+                                        <span class="th-label">UD financiadas</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'ud_financiadas' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=ud_financiadas&dir={{ siguiente_direccion.ud_financiadas }}"
                                             aria-label="Ordenar por unidades financiadas"
                                         >
-                                            {% if sort_by == 'ud_financiadas' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'ud_financiadas' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
-                                <th>
+                                <th
+                                    class="th-sortable{% if sort_by == 'dni' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'dni' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>DNI</span>
+                                        <span class="th-label">DNI</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'dni' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=dni&dir={{ siguiente_direccion.dni }}"
                                             aria-label="Ordenar por dni"
                                         >
-                                            {% if sort_by == 'dni' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'dni' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
-                                <th>
+                                <th
+                                    class="is-secondary-col th-sortable{% if sort_by == 'tipo_cliente' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'tipo_cliente' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>Tipo cliente</span>
+                                        <span class="th-label">Tipo cliente</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'tipo_cliente' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=tipo_cliente&dir={{ siguiente_direccion.tipo_cliente }}"
                                             aria-label="Ordenar por tipo de cliente"
                                         >
-                                            {% if sort_by == 'tipo_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'tipo_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
-                                <th>
+                                <th
+                                    class="th-sortable{% if sort_by == 'nombre_cliente' %} is-sorted{% endif %}"
+                                    aria-sort="{% if sort_by == 'nombre_cliente' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                                >
                                     <div class="th-sort-wrap">
-                                        <span>Nombre cliente</span>
+                                        <span class="th-label">Nombre cliente</span>
                                         <a
                                             class="sort-icon-btn{% if sort_by == 'nombre_cliente' %} active{% endif %}"
                                             href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.idv %}&idv={{ filtros.idv|urlencode }}{% endif %}{% if filtros.tipo_venta %}&tipo_venta={{ filtros.tipo_venta|urlencode }}{% endif %}{% if filtros.dni %}&dni={{ filtros.dni|urlencode }}{% endif %}{% if filtros.tipo_cliente %}&tipo_cliente={{ filtros.tipo_cliente|urlencode }}{% endif %}{% if filtros.nombre_cliente %}&nombre_cliente={{ filtros.nombre_cliente|urlencode }}{% endif %}&sort=nombre_cliente&dir={{ siguiente_direccion.nombre_cliente }}"
                                             aria-label="Ordenar por nombre de cliente"
                                         >
-                                            {% if sort_by == 'nombre_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'nombre_cliente' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
                                         </a>
                                     </div>
                                 </th>
@@ -335,7 +389,7 @@
                                 <td>{{ venta.get_tipo_venta_display|default:"—" }}</td>
                                 <td class="center">{{ venta.ud_financiadas|default_if_none:"—" }}</td>
                                 <td class="center">{{ venta.dni|default:"—" }}</td>
-                                <td class="center">{{ venta.get_tipo_cliente_display|default:"—" }}</td>
+                                <td class="center is-secondary-col">{{ venta.get_tipo_cliente_display|default:"—" }}</td>
                                 <td>{{ venta.nombre_cliente|default:"—" }}</td>
                             </tr>
                             {% endfor %}
@@ -365,6 +419,7 @@
                 {% endif %}
             </section>
         </section>
+        <div class="filters-backdrop" aria-hidden="true"></div>
     </div>
 <script>
     (function () {
@@ -416,7 +471,10 @@
 </script>
     <script src="{% static 'js/filter_accordion.js' %}"></script>
     <script src="{% static 'js/mis_ventas_results.js' %}"></script>
+    <script src="{% static 'js/mis_ventas_filters_toggle.js' %}"></script>
+    <script src="{% static 'js/registrar_incidencia_combobox.js' %}"></script>
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>
+
 

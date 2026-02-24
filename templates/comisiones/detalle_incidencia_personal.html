@@ -7,14 +7,14 @@
     <title>Detalle Incidencia - Mis Incidencias</title>
     <link rel="stylesheet" href="{% static 'css/incidencias_personales.css' %}">
 </head>
-<body>
+<body class="mis-ventas-page mis-incidencias-page detail-incidencia-page">
     <div class="page">
         <header class="top">
             <div class="brand">
                 <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
             </div>
 
-                        <h1 class="page-title">Portal de comisiones</h1>
+            <h1 class="page-title">Portal de comisiones</h1>
 
             <div class="user-panel">
                 <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
@@ -23,20 +23,19 @@
                     {% else %}
                     <div class="avatar">{{ usuario_nombre|first|upper }}</div>
                     {% endif %}
-                    <div>
-                        <div class="meta-row">{{ usuario_nombre }}</div>
-                        <div class="meta-row">{{ usuario_login }}</div>
-                        <div class="meta-row">{{ sede }}</div>
-                        <div class="last-login">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    <div class="user-info">
+                        <span class="user-info-item user-name">{{ usuario_nombre }}</span>
+                        <span class="user-info-item user-role">{{ usuario_login }}</span>
+                        <span class="user-info-item user-location">{{ sede }}</span>
+                        <span class="user-info-item user-last">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
                     </div>
                 </a>
                 <form class="header-logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'login' %}">
-                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                    <button class="header-logout-btn" type="submit">Cerrar sesion</button>
                 </form>
             </div>
-                    
         </header>
 
         <nav class="nav">
@@ -44,7 +43,7 @@
             <a href="{% url 'mis_incidencias' %}" class="active">Mis Incidencias</a>
             <div class="nav-more">
                 <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
-                    Más
+                    M&aacute;s
                 </button>
                 <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
                     <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
@@ -56,62 +55,72 @@
             </div>
         </nav>
 
-        <div class="breadcrumb"></div>
+        <section class="content detail-content">
+            <h2 class="detail-view-title">Detalle de incidencia</h2>
+            <article class="detail-panel">
+                <div class="detail-meta">
+                    <article class="meta-item">
+                        <div class="meta-label">Fecha incidencia</div>
+                        <div class="meta-value">{{ incidencia.fecha_incidencia|date:"d/m/Y" }}</div>
+                    </article>
+                    <article class="meta-item">
+                        <div class="meta-label">Matricula</div>
+                        <div class="meta-value">{{ incidencia.matricula_display }}</div>
+                    </article>
+                    <article class="meta-item">
+                        <div class="meta-label">Tipo de incidencia</div>
+                        <div class="meta-value">{{ incidencia.tipo }}</div>
+                    </article>
+                    <article class="meta-item">
+                        <div class="meta-label">Estado</div>
+                        <div class="meta-value">
+                            {% with estado_txt=incidencia.get_estado_display|lower %}
+                                {% if incidencia.estado == "pte_revision" or estado_txt == "pte. revision" or estado_txt == "pte. revisión" or estado_txt == "pendiente" or estado_txt == "pendiente revision" or estado_txt == "pendiente revisión" %}
+                                    <span class="status-badge status-badge--pending">{{ incidencia.get_estado_display }}</span>
+                                {% elif incidencia.estado == "aceptada" or estado_txt == "resuelto" or estado_txt == "resuelta" %}
+                                    <span class="status-badge status-badge--success">{{ incidencia.get_estado_display }}</span>
+                                {% elif incidencia.estado == "rechazada" %}
+                                    <span class="status-badge status-badge--danger">{{ incidencia.get_estado_display }}</span>
+                                {% else %}
+                                    <span class="status-badge status-badge--neutral">{{ incidencia.get_estado_display }}</span>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </article>
+                </div>
 
-        <section class="inc-table-wrap">
-            <div class="detail-head-grid">
-                <article class="detail-field">
-                    <div class="detail-field-label">Fecha</div>
-                    <div class="card detail-kpi">
-                        <strong>{{ incidencia.fecha_incidencia|date:"d/m/Y" }}</strong>
-                    </div>
-                </article>
-                <article class="detail-field">
-                    <div class="detail-field-label">Matricula</div>
-                    <div class="card detail-kpi">
-                        <strong>{{ incidencia.matricula_display }}</strong>
-                    </div>
-                </article>
-                <article class="detail-field">
-                    <div class="detail-field-label">Tipo de incidencia</div>
-                    <div class="card detail-kpi">
-                        <strong>{{ incidencia.tipo }}</strong>
-                    </div>
-                </article>
-                <article class="detail-field">
-                    <div class="detail-field-label">Estado</div>
-                    <div class="card detail-kpi">
-                        <strong>{{ incidencia.get_estado_display }}</strong>
-                    </div>
-                </article>
-            </div>
+                <article class="detail-card">
+                    <div class="detail-card__header">
+                        <h2 class="detail-card__title">Detalle</h2>
+                        <div class="detail-card__nav detail-pager">
+                            {% if anterior_id %}
+                            <a class="nav-arrow detail-pager__btn detail-pager__btn--prev" href="{% url 'detalle_incidencia_personal' anterior_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}" aria-label="Anterior incidencia">&lsaquo;</a>
+                            {% else %}
+                            <span class="nav-arrow disabled detail-pager__btn detail-pager__btn--prev is-disabled" aria-disabled="true">&lsaquo;</span>
+                            {% endif %}
 
-            <h2 class="detail-section-label">Detalle</h2>
-            <article class="card detail-body">
-                <div class="detail-text">{{ incidencia.detalle|safe|linebreaksbr }}</div>
-            </article>
+                            <span class="nav-counter detail-pager__counter">
+                                {% if posicion_actual %}
+                                {{ posicion_actual }} / {{ total_incidencias }}
+                                {% else %}
+                                0 / {{ total_incidencias }}
+                                {% endif %}
+                            </span>
 
-            <div class="detail-nav">
-                {% if anterior_id %}
-                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' anterior_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}" aria-label="Incidencia anterior">&#9664;</a>
-                {% else %}
-                <span class="nav-arrow disabled" aria-disabled="true">&#9664;</span>
-                {% endif %}
-
-                <span class="nav-counter">
-                    {% if posicion_actual %}
-                    {{ posicion_actual }} / {{ total_incidencias }}
+                            {% if siguiente_id %}
+                            <a class="nav-arrow detail-pager__btn detail-pager__btn--next" href="{% url 'detalle_incidencia_personal' siguiente_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}" aria-label="Siguiente incidencia">&rsaquo;</a>
+                            {% else %}
+                            <span class="nav-arrow disabled detail-pager__btn detail-pager__btn--next is-disabled" aria-disabled="true">&rsaquo;</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if incidencia.detalle %}
+                    <div class="detail-card__body">{{ incidencia.detalle|safe|linebreaksbr }}</div>
                     {% else %}
-                    0 / {{ total_incidencias }}
+                    <div class="detail-card__body is-empty">Sin detalle adicional.</div>
                     {% endif %}
-                </span>
-
-                {% if siguiente_id %}
-                <a class="nav-arrow" href="{% url 'detalle_incidencia_personal' siguiente_id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}" aria-label="Incidencia siguiente">&#9654;</a>
-                {% else %}
-                <span class="nav-arrow disabled" aria-disabled="true">&#9654;</span>
-                {% endif %}
-            </div>
+                </article>
+            </article>
         </section>
     </div>
     <script src="{% static 'js/nav_tabs.js' %}"></script>

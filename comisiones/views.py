@@ -534,12 +534,65 @@ def mis_incidencias(request):
         else:
             siguiente_direccion[campo] = "asc"
 
+    if isinstance(incidencias, list):
+        total_resultados = len(incidencias)
+    else:
+        total_resultados = incidencias.count()
+    initial_visible_rows = 25
+    initial_visible_count = min(total_resultados, initial_visible_rows)
+
+    current_month = f"{date.today().year:04d}-{date.today().month:02d}"
+    active_filters = []
+    if (fecha_desde or fecha_hasta) and (
+        fecha_desde != current_month or fecha_hasta != current_month
+    ):
+        if fecha_desde and fecha_hasta:
+            label_periodo = (
+                f"{_format_year_month_label(fecha_desde)} - "
+                f"{_format_year_month_label(fecha_hasta)}"
+            )
+        else:
+            label_periodo = (
+                _format_year_month_label(fecha_desde)
+                if fecha_desde
+                else _format_year_month_label(fecha_hasta)
+            )
+        active_filters.append(
+            {
+                "title": "Periodo",
+                "label": f"Periodo: {label_periodo}",
+                "fields": ["desde", "hasta"],
+            }
+        )
+
+    if filtros["matricula"]:
+        active_filters.append(
+            {
+                "title": "Matricula",
+                "label": f"Matricula: {filtros['matricula']}",
+                "fields": ["matricula"],
+            }
+        )
+    if filtros["estado"]:
+        estado_label = estado_dict.get(filtros["estado"], filtros["estado"])
+        active_filters.append(
+            {
+                "title": "Estado",
+                "label": f"Estado: {estado_label}",
+                "fields": ["estado"],
+            }
+        )
+
     context = {
         **_contexto_base_usuario(request, perfil),
         "ultima_conexion": request.user.last_login,
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
         "incidencias": incidencias,
+        "total_resultados": total_resultados,
+        "initial_visible_rows": initial_visible_rows,
+        "initial_visible_count": initial_visible_count,
+        "active_filters": active_filters,
         "filtros": filtros,
         "matriculas_opciones": matriculas_opciones,
         "estado_opciones": estado_opciones,

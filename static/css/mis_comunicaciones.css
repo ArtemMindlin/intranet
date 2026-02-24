@@ -24,7 +24,8 @@
 }
 
 .inc-filters input,
-.inc-filters select {
+.inc-filters select,
+.inc-filters .select-combobox__search {
     width: 100%;
     height: 36px;
     border: 1px solid rgba(0, 0, 0, 0.08);

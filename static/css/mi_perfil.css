@@ -1,9 +1,5 @@
 ﻿@import url("mis_ventas.css");
 
-.breadcrumb {
-    margin-bottom: 12px;
-}
-
 .profile-main {
     display: grid;
     grid-template-columns: 1.2fr 1fr 1.2fr;

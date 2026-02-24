@@ -59,13 +59,9 @@
 
 .actions-inline {
     display: flex;
-    gap: 22px;
+    gap: 12px;
     align-items: center;
-}
-
-.actions-inline .action {
-    text-decoration: none;
-    color: inherit;
+    flex-wrap: wrap;
 }
 
 .pending-box {

@@ -7,14 +7,14 @@
     <title>Comisiones - Registrar Incidencia</title>
     <link rel="stylesheet" href="{% static 'css/incidencias_personales.css' %}">
 </head>
-<body>
+<body class="mis-ventas-page mis-incidencias-page registrar-incidencia-page">
     <div class="page">
         <header class="top">
             <div class="brand">
                 <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
             </div>
 
-                        <h1 class="page-title">Portal de comisiones</h1>
+            <h1 class="page-title">Portal de comisiones</h1>
 
             <div class="user-panel">
                 <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
@@ -23,20 +23,19 @@
                     {% else %}
                     <div class="avatar">{{ usuario_nombre|first|upper }}</div>
                     {% endif %}
-                    <div>
-                        <div class="meta-row">{{ usuario_nombre }}</div>
-                        <div class="meta-row">{{ usuario_login }}</div>
-                        <div class="meta-row">{{ sede }}</div>
-                        <div class="last-login">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
+                    <div class="user-info">
+                        <span class="user-info-item user-name">{{ usuario_nombre }}</span>
+                        <span class="user-info-item user-role">{{ usuario_login }}</span>
+                        <span class="user-info-item user-location">{{ sede }}</span>
+                        <span class="user-info-item user-last">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
                     </div>
                 </a>
                 <form class="header-logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'login' %}">
-                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
+                    <button class="header-logout-btn" type="submit">Cerrar sesion</button>
                 </form>
             </div>
-                    
         </header>
 
         <nav class="nav">
@@ -44,7 +43,7 @@
             <a href="{% url 'mis_incidencias' %}" class="active">Mis Incidencias</a>
             <div class="nav-more">
                 <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
-                    Más
+                    M&aacute;s
                 </button>
                 <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
                     <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
@@ -56,9 +55,7 @@
             </div>
         </nav>
 
-        <div class="breadcrumb"></div>
-
-        <section class="inc-table-wrap">
+        <section class="content detail-content">
             {% if errores %}
             <div class="form-errors">
                 {% for error in errores %}
@@ -67,56 +64,71 @@
             </div>
             {% endif %}
 
-            <form method="post" class="reg-form">
+            <form method="post" class="reg-form detail-panel incidencia-form">
                 {% csrf_token %}
-                <div class="detail-head-grid reg-head-grid">
-                    <article class="detail-field">
-                        <div class="detail-field-label">Fecha</div>
-                        <div class="card detail-kpi">
-                            <input
-                                class="reg-input center"
-                                type="date"
-                                name="fecha_incidencia"
-                                max="{% now 'Y-m-d' %}"
-                                value="{{ form_data.fecha_incidencia }}"
-                                required
-                            >
-                        </div>
-                    </article>
-                    <article class="detail-field">
-                        <div class="detail-field-label">Matricula</div>
-                        <div class="card detail-kpi">
-                            <select class="reg-input center" name="matricula" required>
-                                {% for matricula in matriculas_opciones %}
-                                <option value="{{ matricula }}" {% if form_data.matricula == matricula %}selected{% endif %}>{{ matricula }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </article>
-                    <article class="detail-field">
-                        <div class="detail-field-label">Tipo de incidencia</div>
-                        <div class="card detail-kpi">
-                            <select class="reg-input center" name="tipo" required>
-                                {% for tipo in tipo_incidencia_opciones %}
-                                <option value="{{ tipo }}" {% if form_data.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </article>
-                </div>
 
-                <h2 class="detail-section-label">Detalle</h2>
-                <article class="card detail-body">
-                    <textarea class="reg-textarea" name="detalle" required>{{ form_data.detalle }}</textarea>
-                </article>
+                <section class="form-section form-section--datos">
+                    <div class="form-section__content reg-meta">
+                        <article class="meta-item">
+                            <label class="meta-label" for="fecha_incidencia">Fecha</label>
+                            <div class="meta-value reg-control-wrap">
+                                <input
+                                    id="fecha_incidencia"
+                                    class="reg-input reg-input--center"
+                                    type="date"
+                                    name="fecha_incidencia"
+                                    max="{% now 'Y-m-d' %}"
+                                    value="{{ form_data.fecha_incidencia }}"
+                                    required
+                                >
+                            </div>
+                        </article>
+                        <article class="meta-item">
+                            <label class="meta-label" for="matricula">Matricula</label>
+                            <div class="meta-value reg-control-wrap">
+                                <select id="matricula" class="reg-input reg-input--center js-combobox" name="matricula" required data-combobox-placeholder="Buscar matricula...">
+                                    {% for matricula in matriculas_opciones %}
+                                    <option value="{{ matricula }}" {% if form_data.matricula == matricula %}selected{% endif %}>{{ matricula }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </article>
+                        <article class="meta-item">
+                            <label class="meta-label" for="tipo">Tipo de incidencia</label>
+                            <div class="meta-value reg-control-wrap">
+                                <select id="tipo" class="reg-input reg-input--center js-combobox" name="tipo" required data-combobox-placeholder="Buscar tipo de incidencia...">
+                                    {% for tipo in tipo_incidencia_opciones %}
+                                    <option value="{{ tipo }}" {% if form_data.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </article>
+                    </div>
+                </section>
 
-                <div class="reg-actions">
-                    <a class="reg-btn secondary" href="{% url 'mis_incidencias' %}">Cancelar</a>
-                    <button class="reg-btn primary" type="submit">Guardar incidencia</button>
+                <section class="form-section form-section--descripcion">
+                    <div class="form-section__content">
+                        <article class="detail-card reg-detail-card">
+                            <div class="detail-card__header">
+                                <h2 class="detail-card__title">Detalle incidencia</h2>
+                            </div>
+                            <div class="detail-card__body reg-detail-body">
+                                <textarea id="detalleIncidencia" class="reg-textarea" name="detalle" aria-describedby="detalleCounter" required>{{ form_data.detalle }}</textarea>
+                                <div class="field-counter" id="detalleCounter" aria-live="polite">0 caracteres</div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <div class="reg-actions form-actions">
+                    <a class="btn btn-secondary" href="{% url 'mis_incidencias' %}" role="button">Cancelar</a>
+                    <button class="btn btn-primary" type="submit">Guardar incidencia</button>
                 </div>
             </form>
         </section>
     </div>
+    <script src="{% static 'js/registrar_incidencia_combobox.js' %}"></script>
+    <script src="{% static 'js/registrar_incidencia_detalle.js' %}"></script>
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>

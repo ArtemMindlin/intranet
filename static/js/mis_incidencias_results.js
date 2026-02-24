@@ -1,17 +1,14 @@
 (function () {
-    const form = document.getElementById("mis-ventas-filtros-form");
+    const form = document.getElementById("mis-incidencias-filtros-form");
     if (!form) return;
+
     const applyBtn = form.querySelector(".aplicar-filtro");
-    const trackedFilterNames = [
-        "desde",
-        "hasta",
-        "matricula",
-        "idv",
-        "tipo_venta",
-        "dni",
-        "tipo_cliente",
-        "nombre_cliente",
-    ];
+    const trackedFilterNames = ["desde", "hasta", "matricula", "estado"];
+    const rows = Array.from(document.querySelectorAll("[data-result-row]"));
+    const visibleCount = document.getElementById("results-visible-count");
+    const loadMoreBtn = document.getElementById("load-more-incidencias");
+    const clearAllBtn = document.querySelector("[data-clear-all='true']");
+    const chipButtons = Array.from(document.querySelectorAll(".filter-chip"));
 
     function readFilterValue(name) {
         const field = form.elements.namedItem(name);
@@ -26,25 +23,15 @@
     }, {});
 
     function hasFormChanges() {
-        return trackedFilterNames.some((name) => readFilterValue(name) !== initialFilterState[name]);
+        return trackedFilterNames.some(
+            (name) => readFilterValue(name) !== initialFilterState[name]
+        );
     }
 
     function syncApplyButtonState() {
         if (!applyBtn) return;
         applyBtn.disabled = !hasFormChanges();
     }
-
-    if (applyBtn) {
-        syncApplyButtonState();
-        form.addEventListener("input", syncApplyButtonState);
-        form.addEventListener("change", syncApplyButtonState);
-    }
-
-    const rows = Array.from(document.querySelectorAll("[data-result-row]"));
-    const visibleCount = document.getElementById("results-visible-count");
-    const loadMoreBtn = document.getElementById("load-more-results");
-    const clearAllBtn = document.querySelector("[data-clear-all='true']");
-    const chipButtons = Array.from(document.querySelectorAll(".filter-chip"));
 
     function getField(name) {
         return form.elements.namedItem(name);
@@ -60,30 +47,10 @@
         form.submit();
     }
 
-    function getActiveFilters() {
-        const read = (name) => {
-            const field = getField(name);
-            return field ? String(field.value || "").trim() : "";
-        };
-        const current = {
-            desde: read("desde"),
-            hasta: read("hasta"),
-            matricula: read("matricula"),
-            idv: read("idv"),
-            tipo_venta: read("tipo_venta"),
-            dni: read("dni"),
-            tipo_cliente: read("tipo_cliente"),
-            nombre_cliente: read("nombre_cliente"),
-        };
-        const active = [];
-        if (current.desde || current.hasta) active.push("periodo");
-        if (current.matricula) active.push("matricula");
-        if (current.idv) active.push("idv");
-        if (current.tipo_venta) active.push("tipo_venta");
-        if (current.dni) active.push("dni");
-        if (current.tipo_cliente) active.push("tipo_cliente");
-        if (current.nombre_cliente) active.push("nombre_cliente");
-        return active;
+    if (applyBtn) {
+        syncApplyButtonState();
+        form.addEventListener("input", syncApplyButtonState);
+        form.addEventListener("change", syncApplyButtonState);
     }
 
     chipButtons.forEach((chip) => {
@@ -103,10 +70,7 @@
         });
     }
 
-    if (!rows.length || !loadMoreBtn) {
-        window.getActiveFilters = getActiveFilters;
-        return;
-    }
+    if (!rows.length || !loadMoreBtn) return;
 
     const pageSize = Number.parseInt(loadMoreBtn.dataset.pageSize || "25", 10) || 25;
 
@@ -151,5 +115,4 @@
 
     updateVisibleCounter();
     syncLoadMoreState();
-    window.getActiveFilters = getActiveFilters;
 })();
