@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 {% load static %}
 <head>
@@ -16,25 +16,36 @@
 
             <h1 class="page-title">Portal de comisiones</h1>
 
-            <div class="user-panel">
-                <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+            <div class="user-panel" data-user-menu>
+                <button
+                    type="button"
+                    class="user-chip"
+                    data-user-menu-toggle
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-controls="user-menu-dropdown"
+                >
                     {% if foto_perfil_url %}
-                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                    <img class="avatar avatar-img user-chip__avatar" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre|default:usuario_login }}">
                     {% else %}
-                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                    <div class="avatar user-chip__avatar">{{ usuario_nombre|default:usuario_login|first|upper }}</div>
                     {% endif %}
-                    <div class="user-info">
-                        <span class="user-info-item user-name">{{ usuario_nombre }}</span>
-                        <span class="user-info-item user-role">{{ usuario_login }}</span>
-                        <span class="user-info-item user-location">{{ sede }}</span>
-                        <span class="user-info-item user-last">Ult. conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
-                    </div>
-                </a>
-                <form class="header-logout-form" method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{% url 'login' %}">
-                    <button class="header-logout-btn" type="submit">Cerrar sesion</button>
-                </form>
+                    <span class="user-chip__meta">
+                        <span class="user-chip__name">{{ usuario_nombre|default:usuario_login }}</span>
+                        <span class="user-chip__last">&Uacute;lt. conexi&oacute;n: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
+                    </span>
+                    <span class="user-chip__chevron" aria-hidden="true">&#9662;</span>
+                </button>
+
+                <div id="user-menu-dropdown" class="user-dropdown" data-user-menu-dropdown role="menu" hidden>
+                    <a class="user-dropdown__item" href="{% url 'mi_perfil' %}" role="menuitem">Perfil</a>
+                    <div class="user-dropdown__separator" role="separator"></div>
+                    <form class="user-dropdown__logout-form" method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'login' %}">
+                        <button class="user-dropdown__item user-dropdown__item--danger" type="submit" role="menuitem">Cerrar sesi&oacute;n</button>
+                    </form>
+                </div>
             </div>
         </header>
 
@@ -46,7 +57,7 @@
                     M&aacute;s
                 </button>
                 <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
-                    <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
+                    <a href="{% url 'boletin' %}" role="menuitem">Bolet&iacute;n</a>
                     <a href="{% url 'normativas' %}" role="menuitem">Normativas</a>
                     <a href="{% url 'manuales' %}" role="menuitem">Manuales</a>
                     <a href="{% url 'avisos_sin_leer' %}" role="menuitem">Avisos sin leer</a>
@@ -321,6 +332,8 @@
     <script src="{% static 'js/mis_incidencias_results.js' %}"></script>
     <script src="{% static 'js/mis_incidencias_filters_toggle.js' %}"></script>
     <script src="{% static 'js/registrar_incidencia_combobox.js' %}"></script>
+    <script src="{% static 'js/user_menu.js' %}"></script>
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>
+

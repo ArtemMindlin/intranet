@@ -1,14 +1,16 @@
 ﻿from calendar import monthrange
 from datetime import date
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.db.models import Q, Sum, CharField
 from django.db.models.functions import Cast
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Comision, Incidencia, Perfil, Venta
+from .forms import MiPerfilEditableForm
+from .models import Boletin, Comision, Incidencia, LecturaBoletin, Perfil, Venta
 
 # Envio de correo temporalmente desactivado:
 # import logging
@@ -34,6 +36,26 @@ def _contexto_base_usuario(request, perfil):
         "foto_perfil_url": perfil.foto_perfil.url if perfil.foto_perfil else "",
         "ultima_conexion": request.user.last_login,
     }
+
+
+def _rol_usuario(user):
+    prioridad = [
+        "Director Comercial",
+        "Gerente",
+        "Jefe de ventas",
+        "Vendedor",
+    ]
+    grupos = set(user.groups.values_list("name", flat=True))
+    for rol in prioridad:
+        if rol in grupos:
+            return rol
+    return "Usuario"
+
+
+def _nombre_usuario(user):
+    if not user:
+        return "--"
+    return user.get_full_name().strip() or user.username
 
 
 def _parse_iso_date(value):
@@ -158,11 +180,33 @@ def _unique_non_empty(values):
     return result
 
 
+def _registrar_lectura_boletin(boletin, usuario):
+    LecturaBoletin.objects.update_or_create(
+        boletin=boletin,
+        usuario=usuario,
+        defaults={"confirmado": True},
+    )
+
+
 @login_required
 def descargar_boletin_mock(request, boletin_id):
+    boletin = get_object_or_404(Boletin, pk=boletin_id, activo=True)
+
+    if request.GET.get("registrar_lectura") == "1":
+        _registrar_lectura_boletin(boletin, request.user)
+
+    if boletin.archivo:
+        boletin.archivo.open("rb")
+        return FileResponse(
+            boletin.archivo,
+            as_attachment=True,
+            filename=boletin.archivo.name.split("/")[-1],
+            content_type="application/pdf",
+        )
+
     pdf_bytes = _build_empty_pdf_bytes()
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="boletin_{boletin_id}.pdf"'
+    response["Content-Disposition"] = f'attachment; filename="boletin_{boletin.id}.pdf"'
     return response
 
 
@@ -609,50 +653,36 @@ def mis_comunicaciones(request):
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
         request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
-
-    comunicaciones = [
-        {
-            "id": 1,
-            "boletin": "Boletin de objetivos comerciales",
-            "fecha": date(2026, 2, 10),
-            "marca": "Nissan",
-            "tipo": "Comercial",
-        },
-        {
-            "id": 2,
-            "boletin": "Novedades de financiacion Q1",
-            "fecha": date(2026, 1, 28),
-            "marca": "Renault",
-            "tipo": "Financiero",
-        },
-        {
-            "id": 3,
-            "boletin": "Cambios de campanas de marca",
-            "fecha": date(2026, 1, 16),
-            "marca": "Dacia",
-            "tipo": "Marketing",
-        },
-    ]
-
-    comunicaciones = sorted(
-        comunicaciones, key=lambda item: item["fecha"], reverse=True
-    )
-    comunicaciones_periodo = comunicaciones
+    comunicaciones_periodo_qs = Boletin.objects.filter(activo=True)
     if fecha_desde_date:
-        comunicaciones_periodo = [
-            item for item in comunicaciones_periodo if item["fecha"] >= fecha_desde_date
-        ]
+        comunicaciones_periodo_qs = comunicaciones_periodo_qs.filter(
+            fecha__gte=fecha_desde_date
+        )
     if fecha_hasta_date:
-        comunicaciones_periodo = [
-            item for item in comunicaciones_periodo if item["fecha"] <= fecha_hasta_date
-        ]
+        comunicaciones_periodo_qs = comunicaciones_periodo_qs.filter(
+            fecha__lte=fecha_hasta_date
+        )
 
-    marcas_opciones = sorted({item["marca"] for item in comunicaciones_periodo})
-    tipos_opciones = sorted({item["tipo"] for item in comunicaciones_periodo})
+    marcas_opciones = list(
+        comunicaciones_periodo_qs.exclude(marca__isnull=True)
+        .exclude(marca="")
+        .values_list("marca", flat=True)
+        .distinct()
+        .order_by("marca")
+    )
+    tipos_opciones = list(
+        comunicaciones_periodo_qs.exclude(tipo__isnull=True)
+        .exclude(tipo="")
+        .values_list("tipo", flat=True)
+        .distinct()
+        .order_by("tipo")
+    )
+
     filtros = {
         "marca": request.GET.get("marca", "").strip(),
         "tipo": request.GET.get("tipo", "").strip(),
     }
+
     sort_by = request.GET.get("sort", "fecha").strip().lower()
     sort_dir = request.GET.get("dir", "desc").strip().lower()
     campos_ordenables = {"boletin", "fecha", "marca", "tipo"}
@@ -661,33 +691,18 @@ def mis_comunicaciones(request):
     if sort_dir not in {"asc", "desc"}:
         sort_dir = "desc"
 
-    comunicaciones_filtradas = comunicaciones_periodo
+    comunicaciones_qs = comunicaciones_periodo_qs
     if filtros["marca"]:
-        comunicaciones_filtradas = [
-            item
-            for item in comunicaciones_filtradas
-            if item["marca"].lower() == filtros["marca"].lower()
-        ]
+        comunicaciones_qs = comunicaciones_qs.filter(marca__iexact=filtros["marca"])
     if filtros["tipo"]:
-        comunicaciones_filtradas = [
-            item
-            for item in comunicaciones_filtradas
-            if item["tipo"].lower() == filtros["tipo"].lower()
-        ]
+        comunicaciones_qs = comunicaciones_qs.filter(tipo__iexact=filtros["tipo"])
 
-    reverse_order = sort_dir == "desc"
-    if sort_by == "fecha":
-        comunicaciones_filtradas = sorted(
-            comunicaciones_filtradas,
-            key=lambda item: item["fecha"],
-            reverse=reverse_order,
-        )
-    else:
-        comunicaciones_filtradas = sorted(
-            comunicaciones_filtradas,
-            key=lambda item: str(item.get(sort_by, "")).lower(),
-            reverse=reverse_order,
-        )
+    campo_orden = sort_by
+    prefijo = "" if sort_dir == "asc" else "-"
+    comunicaciones_qs = comunicaciones_qs.order_by(
+        f"{prefijo}{campo_orden}",
+        "id" if sort_dir == "asc" else "-id",
+    )
 
     siguiente_direccion = {}
     for campo in campos_ordenables:
@@ -695,6 +710,59 @@ def mis_comunicaciones(request):
             siguiente_direccion[campo] = "desc"
         else:
             siguiente_direccion[campo] = "asc"
+
+    comunicaciones = list(comunicaciones_qs)
+    total_resultados = len(comunicaciones)
+    initial_visible_rows = 25
+    initial_visible_count = min(total_resultados, initial_visible_rows)
+
+    leidos_ids = set(
+        LecturaBoletin.objects.filter(
+            usuario=request.user, boletin_id__in=[b.id for b in comunicaciones]
+        ).values_list("boletin_id", flat=True)
+    )
+    for boletin in comunicaciones:
+        boletin.ya_leido = boletin.id in leidos_ids
+
+    current_month = _format_year_month((date.today().year, date.today().month))
+    active_filters = []
+    if (fecha_desde or fecha_hasta) and (
+        fecha_desde != current_month or fecha_hasta != current_month
+    ):
+        if fecha_desde and fecha_hasta:
+            label_periodo = (
+                f"{_format_year_month_label(fecha_desde)} - "
+                f"{_format_year_month_label(fecha_hasta)}"
+            )
+        else:
+            label_periodo = (
+                _format_year_month_label(fecha_desde)
+                if fecha_desde
+                else _format_year_month_label(fecha_hasta)
+            )
+        active_filters.append(
+            {
+                "title": "Periodo",
+                "label": f"Periodo: {label_periodo}",
+                "fields": ["desde", "hasta"],
+            }
+        )
+    if filtros["marca"]:
+        active_filters.append(
+            {
+                "title": "Marca",
+                "label": f"Marca: {filtros['marca']}",
+                "fields": ["marca"],
+            }
+        )
+    if filtros["tipo"]:
+        active_filters.append(
+            {
+                "title": "Tipo",
+                "label": f"Tipo: {filtros['tipo']}",
+                "fields": ["tipo"],
+            }
+        )
 
     context = {
         **_contexto_base_usuario(request, perfil),
@@ -704,10 +772,14 @@ def mis_comunicaciones(request):
         "filtros": filtros,
         "marcas_opciones": marcas_opciones,
         "tipos_opciones": tipos_opciones,
+        "total_resultados": total_resultados,
+        "initial_visible_rows": initial_visible_rows,
+        "initial_visible_count": initial_visible_count,
+        "active_filters": active_filters,
         "sort_by": sort_by,
         "sort_dir": sort_dir,
         "siguiente_direccion": siguiente_direccion,
-        "comunicaciones": comunicaciones_filtradas,
+        "comunicaciones": comunicaciones,
     }
     return render(request, "comisiones/mis_comunicaciones.html", context)
 
@@ -895,19 +967,65 @@ def mi_perfil(request):
         perfil.ha_visto_perfil_inicial = True
         perfil.save(update_fields=["ha_visto_perfil_inicial"])
 
+    perfil_edit_mode = False
+    if request.method == "POST":
+        editable_form = MiPerfilEditableForm(request.POST)
+        if editable_form.is_valid():
+            email = editable_form.cleaned_data["email"].strip()
+            telefono = editable_form.cleaned_data["telefono"]
+
+            user_updates = []
+            if request.user.email != email:
+                request.user.email = email
+                user_updates.append("email")
+
+            perfil_updates = []
+            if perfil.telefono != telefono:
+                perfil.telefono = telefono
+                perfil_updates.append("telefono")
+
+            if user_updates:
+                request.user.save(update_fields=user_updates)
+            if perfil_updates:
+                perfil.save(update_fields=perfil_updates)
+
+            messages.success(request, "Guardado ✓")
+            return redirect("mi_perfil")
+
+        perfil_edit_mode = True
+        messages.error(request, "Revisa los campos marcados.")
+    else:
+        editable_form = MiPerfilEditableForm(
+            initial={
+                "email": request.user.email or "",
+                "telefono": perfil.telefono or "",
+            }
+        )
+
+    area = perfil.area or Perfil.AREA_VENTAS
+    jefatura_label = (
+        "Jefatura de Postventa"
+        if area == Perfil.AREA_POSTVENTA
+        else "Jefatura de Ventas"
+    )
+    campos_organizacion = [
+        ("Sede", perfil.sede or "--"),
+        (jefatura_label, _nombre_usuario(perfil.jefe_ventas)),
+        ("Gerente", _nombre_usuario(perfil.gerente)),
+        ("Director Comercial", _nombre_usuario(perfil.director_comercial)),
+    ]
+
     context = {
         **_contexto_base_usuario(request, perfil),
         "ultima_conexion": request.user.last_login,
-        "dni": "50232508W",
-        "email": request.user.email or "usuario@empresa.com",
-        "telefono": "637372631",
-        "perfil_rol": "Vendedor",
-        "area": "ventas",
-        "concesionario": "Francisco Marcos",
-        "direccion_comercial": "Ovidio Portillo",
-        "gerencia": "Ovidio Portillo",
-        "jefatura_ventas": "Francisco Javier González",
-        "responsable_vo": "Damián Rech",
+        "dni": perfil.dni or "",
+        "email": request.user.email or "",
+        "telefono": perfil.telefono or "",
+        "perfil_rol": _rol_usuario(request.user),
+        "area": area,
+        "perfil_edit_mode": perfil_edit_mode,
+        "editable_form": editable_form,
+        "campos_organizacion": campos_organizacion,
     }
     return render(request, "comisiones/mi_perfil.html", context)
 
@@ -1042,3 +1160,6 @@ def redirigir_por_rol(request):
     if user.groups.filter(name__in=["Vendedor", "Jefe de ventas"]).exists():
         return redirect("mis_ventas")
     return redirect("comisiones_gerencia")
+
+
+

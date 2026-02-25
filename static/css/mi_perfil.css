@@ -1,183 +1,212 @@
-﻿@import url("mis_ventas.css");
+@import url("mis_ventas.css");
 
-.profile-main {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr 1.2fr;
-    gap: 16px;
-    align-items: start;
-}
-
-.profile-main-compact {
-    grid-template-columns: repeat(2, minmax(460px, 560px));
-    justify-content: center;
-    gap: 14px;
-}
-
-.profile-card {
-    background: #f1f1f1;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+.mi-perfil-page .profile-content {
+    display: block;
     padding: 12px;
 }
 
-.organization {
-    border-left: 2px solid #b9b9b9;
-    padding-left: 14px;
+.mi-perfil-page .profile-main {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(420px, 1fr));
+    gap: 14px;
+    align-items: start;
 }
 
-.profile-top {
+.mi-perfil-page .profile-main-compact {
+    justify-content: center;
+}
+
+.mi-perfil-page .profile-card {
+    background: #f8fafc;
+    border: 1px solid var(--gray-border, #e5e7eb);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.mi-perfil-page .profile-top {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 10px;
 }
 
-.logout-form {
-    margin-left: auto;
+.mi-perfil-page .profile-top .avatar {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 auto;
 }
 
-.logout-btn {
-    border: none;
-    border-radius: 16px;
-    background: #d0d0d0;
-    color: #111;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 8px 12px;
-    cursor: pointer;
-    white-space: nowrap;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
+.mi-perfil-page .last-login {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted, #6b7280);
 }
 
-.logout-btn:hover {
-    background: #c4c4c4;
-}
-
-.profile-top .avatar {
-    width: 88px;
-    height: 88px;
-}
-
-.data-grid {
+.mi-perfil-page .data-grid {
     display: grid;
     gap: 6px;
     margin-bottom: 12px;
 }
 
-.data-grid label {
-    font-size: 16px;
-    color: #2d2d2d;
+.mi-perfil-page .data-grid label {
+    display: block;
+    font-size: 13px;
+    color: #374151;
+    margin: 0;
 }
 
-.value-line {
-    background: var(--color-bg-surface-strong);
-    color: #1f1f1f;
-    padding: 7px 10px;
-    font-size: 16px;
-    font-weight: 700;
+.mi-perfil-page .value-line {
+    background: #fff;
+    border: 1px solid var(--gray-border, #e5e7eb);
+    color: #111827;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-weight: 600;
     min-height: 36px;
     display: flex;
     align-items: center;
+    border-radius: 8px;
 }
 
-.small-gap {
-    gap: 4px;
-}
-
-.password label {
-    display: block;
-    font-size: 16px;
-    margin: 4px 0;
-}
-
-.password input {
-    width: 100%;
-    height: 36px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 6px 10px;
+.mi-perfil-page .value-input {
     background: #fff;
-    margin-bottom: 10px;
-    font-size: 15px;
+    border: 1px solid var(--gray-border, #e5e7eb);
+    color: #111827;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 36px;
+    border-radius: 8px;
+    font-family: inherit;
+    width: 100%;
 }
 
-.areas {
+.mi-perfil-page .value-input:disabled {
+    background: #fff;
+    color: #111827;
+    opacity: 1;
+    cursor: default;
+}
+
+.mi-perfil-page .value-input:focus-visible {
+    outline: 2px solid var(--color-focus-ring, rgba(45, 180, 129, 0.35));
+    outline-offset: 1px;
+}
+
+.mi-perfil-page .field-error {
+    margin: -2px 0 2px;
+    font-size: 12px;
+    color: #b42318;
+}
+
+.mi-perfil-page .profile-actions {
     display: flex;
-    gap: 26px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.mi-perfil-page .profile-form-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mi-perfil-page .btn-outline-secondary {
+    background: transparent;
+    color: #4b5563;
+    border: 1px solid #cbd5e1;
+    font-weight: 500;
+}
+
+.mi-perfil-page .btn-outline-secondary:hover {
+    background: #f3f4f6;
+    border-color: #94a3b8;
+}
+
+.mi-perfil-page .profile-logout-form {
+    margin: 0;
+    margin-left: auto;
+}
+
+.mi-perfil-page .flash-messages {
+    margin: 0 0 10px;
+}
+
+.mi-perfil-page .flash-message {
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+
+.mi-perfil-page .flash-message.success {
+    background: #edf7ee;
+    border-color: #b8dfbe;
+    color: #1b5e20;
+}
+
+.mi-perfil-page .flash-message.error {
+    background: #fdecec;
+    border-color: #f5c2c0;
+    color: #9b1c1c;
+}
+
+.mi-perfil-page .is-hidden {
+    display: none;
+}
+
+.mi-perfil-page .small-gap {
+    gap: 5px;
+}
+
+.mi-perfil-page .areas {
+    display: flex;
+    gap: 22px;
     margin: 2px 0 12px;
     flex-wrap: wrap;
 }
 
-.areas label {
-    font-size: 16px;
-    display: flex;
+.mi-perfil-page .areas label {
+    font-size: 14px;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    color: #374151;
 }
 
-.action-btn {
+.mi-perfil-page .action-btn {
     width: 100%;
-    border: none;
-    border-radius: 18px;
-    background: #d0d0d0;
-    color: #111;
-    font-size: 16px;
-    font-weight: 800;
-    text-transform: uppercase;
-    padding: 10px 14px;
-    cursor: pointer;
 }
 
-.action-btn:hover {
-    background: #c4c4c4;
-}
-
-@media (max-width: 1200px) {
-    .profile-main {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .organization {
-        grid-column: 1 / -1;
-        border-left: none;
-        border-top: 2px solid #b9b9b9;
-        padding-left: 12px;
-        padding-top: 12px;
-    }
-
-    .profile-main-compact {
+@media (max-width: 1100px) {
+    .mi-perfil-page .profile-main {
         grid-template-columns: 1fr;
-        justify-content: stretch;
     }
 }
 
 @media (max-width: 768px) {
-    .profile-main {
-        grid-template-columns: 1fr;
-        gap: 10px;
+    .mi-perfil-page .profile-content {
+        padding: 10px;
     }
 
-    .organization {
-        border-top: none;
-        padding-top: 12px;
-        padding-left: 12px;
+    .mi-perfil-page .profile-card {
+        padding: 10px;
     }
 
-    .profile-top {
+    .mi-perfil-page .profile-top {
         align-items: flex-start;
         flex-direction: column;
+        gap: 8px;
     }
 
-    .logout-form {
-        margin-left: 0;
-    }
-
-    .data-grid label,
-    .value-line,
-    .password label,
-    .password input,
-    .areas label,
-    .action-btn {
-        font-size: 14px;
+    .mi-perfil-page .data-grid label,
+    .mi-perfil-page .value-line,
+    .mi-perfil-page .areas label,
+    .mi-perfil-page .action-btn {
+        font-size: 13px;
     }
 }

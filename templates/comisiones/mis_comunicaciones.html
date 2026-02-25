@@ -4,39 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comisiones - Boletin</title>
+    <title>Comisiones - Bolet&iacute;n</title>
     <link rel="stylesheet" href="{% static 'css/mis_comunicaciones.css' %}">
 </head>
-<body>
+<body class="mis-ventas-page mis-comunicaciones-page">
     <div class="page">
         <header class="top">
             <div class="brand">
-                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoci&oacute;n">
             </div>
 
-                        <h1 class="page-title">Portal de comisiones</h1>
+            <h1 class="page-title">Portal de comisiones</h1>
 
-            <div class="user-panel">
-                <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+            <div class="user-panel" data-user-menu>
+                <button
+                    type="button"
+                    class="user-chip"
+                    data-user-menu-toggle
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-controls="user-menu-dropdown"
+                >
                     {% if foto_perfil_url %}
-                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                    <img class="avatar avatar-img user-chip__avatar" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre|default:usuario_login }}">
                     {% else %}
-                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                    <div class="avatar user-chip__avatar">{{ usuario_nombre|default:usuario_login|first|upper }}</div>
                     {% endif %}
-                    <div>
-                        <div class="meta-row">{{ usuario_nombre }}</div>
-                        <div class="meta-row">{{ usuario_login }}</div>
-                        <div class="meta-row">{{ sede }}</div>
-                        <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
-                    </div>
-                </a>
-                <form class="header-logout-form" method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{% url 'login' %}">
-                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
-                </form>
+                    <span class="user-chip__meta">
+                        <span class="user-chip__name">{{ usuario_nombre|default:usuario_login }}</span>
+                        <span class="user-chip__last">&Uacute;lt. conexi&oacute;n: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
+                    </span>
+                    <span class="user-chip__chevron" aria-hidden="true">&#9662;</span>
+                </button>
+
+                <div id="user-menu-dropdown" class="user-dropdown" data-user-menu-dropdown role="menu" hidden>
+                    <a class="user-dropdown__item" href="{% url 'mi_perfil' %}" role="menuitem">Perfil</a>
+                    <div class="user-dropdown__separator" role="separator"></div>
+                    <form class="user-dropdown__logout-form" method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'login' %}">
+                        <button class="user-dropdown__item user-dropdown__item--danger" type="submit" role="menuitem">Cerrar sesi&oacute;n</button>
+                    </form>
+                </div>
             </div>
-                    
         </header>
 
         <nav class="nav">
@@ -44,10 +54,10 @@
             <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
             <div class="nav-more">
                 <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
-                    Más
+                    M&aacute;s
                 </button>
                 <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
-                    <a href="{% url 'boletin' %}" role="menuitem" class="active">Boletin</a>
+                    <a href="{% url 'boletin' %}" role="menuitem" class="active">Bolet&iacute;n</a>
                     <a href="{% url 'normativas' %}" role="menuitem">Normativas</a>
                     <a href="{% url 'manuales' %}" role="menuitem">Manuales</a>
                     <a href="{% url 'avisos_sin_leer' %}" role="menuitem">Avisos sin leer</a>
@@ -56,117 +66,194 @@
             </div>
         </nav>
 
-        <section class="inc-filters card">
-            <form method="get" class="inc-filters-grid" id="comunicaciones-filtros-form">
-                <div class="field">
-                    <label for="desde">Desde</label>
-                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
-                </div>
-                <div class="field">
-                    <label for="hasta">Hasta</label>
-                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
-                </div>
-                <div class="field">
-                    <label for="marca">Marca</label>
-                    <select id="marca" name="marca" class="js-combobox" data-combobox-placeholder="Buscar marca...">
-                        <option value="">Todas</option>
-                        {% for marca in marcas_opciones %}
-                        <option value="{{ marca }}" {% if filtros.marca == marca %}selected{% endif %}>{{ marca }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="tipo">Tipo</label>
-                    <select id="tipo" name="tipo" class="js-combobox" data-combobox-placeholder="Buscar tipo...">
-                        <option value="">Todos</option>
-                        {% for tipo in tipos_opciones %}
-                        <option value="{{ tipo }}" {% if filtros.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="field field-submit">
-                    <button type="submit">Aplicar filtro</button>
-                </div>
-            </form>
+        <section class="content-topbar">
+            <button class="filters-toggle" type="button" aria-controls="filtersPanel" aria-expanded="true">
+                <span class="filters-toggle__icon" aria-hidden="true">&#9776;</span>
+                <span class="filters-toggle__label">Filtros</span>
+            </button>
         </section>
 
-        <section class="communications-wrap">
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Boletin</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'boletin' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=boletin&dir={{ siguiente_direccion.boletin }}"
-                                        aria-label="Ordenar por boletin"
-                                    >
-                                        {% if sort_by == 'boletin' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
+        <section class="content main-layout">
+            <aside id="filtersPanel" class="filters-panel-shell" tabindex="-1">
+                <form method="get" class="filters filters-panel" id="mis-comunicaciones-filtros-form">
+                    <input type="hidden" name="sort" value="{{ sort_by }}">
+                    <input type="hidden" name="dir" value="{{ sort_dir }}">
+
+                    <div class="filter-accordion is-open">
+                        <button type="button" class="filter-accordion__header" aria-expanded="true" aria-controls="filtros-periodo-content">
+                            <span>Periodo</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-periodo-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="desde">Desde</label>
+                                    <input type="month" id="desde" name="desde" value="{{ fecha_desde }}">
                                 </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Fecha</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}"
-                                        aria-label="Ordenar por fecha"
-                                    >
-                                        {% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
+                                <div class="field">
+                                    <label for="hasta">Hasta</label>
+                                    <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
                                 </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Marca</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'marca' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=marca&dir={{ siguiente_direccion.marca }}"
-                                        aria-label="Ordenar por marca"
-                                    >
-                                        {% if sort_by == 'marca' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-accordion">
+                        <button type="button" class="filter-accordion__header" aria-expanded="false" aria-controls="filtros-clasificacion-content">
+                            <span>Clasificaci&oacute;n</span>
+                            <span class="filter-accordion__icon" aria-hidden="true"></span>
+                        </button>
+                        <div class="filter-accordion__content" id="filtros-clasificacion-content">
+                            <div class="filter-group">
+                                <div class="field">
+                                    <label for="marca">Marca</label>
+                                    <select id="marca" name="marca" class="js-combobox" data-combobox-placeholder="Buscar marca...">
+                                        <option value="">Todas</option>
+                                        {% for marca in marcas_opciones %}
+                                        <option value="{{ marca }}" {% if filtros.marca == marca %}selected{% endif %}>{{ marca }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
-                            </th>
-                            <th>
-                                <div class="th-sort-wrap">
-                                    <span>Tipo</span>
-                                    <a
-                                        class="sort-icon-btn{% if sort_by == 'tipo' %} active{% endif %}"
-                                        href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=tipo&dir={{ siguiente_direccion.tipo }}"
-                                        aria-label="Ordenar por tipo"
-                                    >
-                                        {% if sort_by == 'tipo' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
-                                    </a>
+                                <div class="field">
+                                    <label for="tipo">Tipo</label>
+                                    <select id="tipo" name="tipo" class="js-combobox" data-combobox-placeholder="Buscar tipo...">
+                                        <option value="">Todos</option>
+                                        {% for tipo in tipos_opciones %}
+                                        <option value="{{ tipo }}" {% if filtros.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
-                            </th>
-                            <th>Ver Boletin</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for comunicacion in comunicaciones %}
-                        <tr>
-                            <td>{{ comunicacion.boletin }}</td>
-                            <td class="center">{{ comunicacion.fecha|date:"d/m/Y" }}</td>
-                            <td class="center">{{ comunicacion.marca }}</td>
-                            <td class="center">{{ comunicacion.tipo }}</td>
-                            <td class="center">
-                                <a class="boletin-link" href="{% url 'descargar_boletin_mock' comunicacion.id %}">Ver</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="center">No hay boletines disponibles.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field field-submit">
+                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtro</button>
+                    </div>
+                </form>
+            </aside>
+
+            <section class="results-panel table-panel" aria-live="polite">
+                {% if total_resultados > 0 or active_filters %}
+                <div class="results-summary-row">
+                    {% if total_resultados > 0 %}
+                    <p class="results-meta">
+                        Mostrando <strong id="results-visible-count">{{ initial_visible_count }}</strong> de {{ total_resultados }}
+                    </p>
+                    {% endif %}
+
+                    {% if active_filters %}
+                    <div class="active-filters active-filters--classic" aria-label="Filtros activos">
+                        <span class="active-filters-label">Filtros activos</span>
+                        <div class="active-filters-chips">
+                            {% for chip in active_filters %}
+                            <button type="button" class="filter-chip" data-clear-fields="{{ chip.fields|join:',' }}" aria-label="Eliminar filtro {{ chip.title }}">
+                                <span>{{ chip.label }}</span>
+                                <span class="chip-remove" aria-hidden="true">&times;</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="clear-filters-btn clear-filters-btn--classic" data-clear-all="true">
+                            Limpiar todos
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if comunicaciones %}
+                <div class="table-wrap">
+                    <table class="mis-ventas-results mis-comunicaciones-results">
+                        <thead>
+                            <tr>
+                                <th class="is-primary-col th-sortable{% if sort_by == 'boletin' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'boletin' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Bolet&iacute;n</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'boletin' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=boletin&dir={{ siguiente_direccion.boletin }}" aria-label="Ordenar por bolet&iacute;n">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'boletin' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th class="th-sortable{% if sort_by == 'fecha' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'fecha' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Fecha</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'fecha' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=fecha&dir={{ siguiente_direccion.fecha }}" aria-label="Ordenar por fecha">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'fecha' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th class="th-sortable{% if sort_by == 'marca' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'marca' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Marca</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'marca' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=marca&dir={{ siguiente_direccion.marca }}" aria-label="Ordenar por marca">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'marca' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th class="th-sortable{% if sort_by == 'tipo' %} is-sorted{% endif %}" aria-sort="{% if sort_by == 'tipo' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+                                    <div class="th-sort-wrap">
+                                        <span class="th-label">Tipo</span>
+                                        <a class="sort-icon-btn{% if sort_by == 'tipo' %} active{% endif %}" href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.marca %}&marca={{ filtros.marca|urlencode }}{% endif %}{% if filtros.tipo %}&tipo={{ filtros.tipo|urlencode }}{% endif %}&sort=tipo&dir={{ siguiente_direccion.tipo }}" aria-label="Ordenar por tipo">
+                                            <span class="th-icon" aria-hidden="true">{% if sort_by == 'tipo' and sort_dir == 'asc' %}&#9650;{% else %}&#9660;{% endif %}</span>
+                                        </a>
+                                    </div>
+                                </th>
+                                <th><div class="th-sort-wrap"><span class="th-label">Ver bolet&iacute;n</span></div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for comunicacion in comunicaciones %}
+                            <tr data-result-row {% if forloop.counter > initial_visible_rows %}hidden{% endif %}>
+                                <td class="is-primary-col">{{ comunicacion.boletin|default:"--" }}</td>
+                                <td class="center">{{ comunicacion.fecha|date:"d/m/Y" }}</td>
+                                <td class="center">{{ comunicacion.marca|default:"--" }}</td>
+                                <td class="center">{{ comunicacion.tipo|default:"--" }}</td>
+                                <td class="center">
+                                    <a class="pill-link btn-detalle btn-detalle--view boletin-link js-boletin-open" href="{% url 'descargar_boletin_mock' comunicacion.id %}" data-boletin-id="{{ comunicacion.id }}" data-boletin-titulo="{{ comunicacion.boletin|default:'Bolet&iacute;n' }}" aria-label="Ver bolet&iacute;n">
+                                        <span class="btn-detalle__icon" aria-hidden="true">&#128065;</span>
+                                        <span class="btn-detalle__text">Ver</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if total_resultados > initial_visible_rows %}
+                <div class="results-footer">
+                    <button type="button" id="load-more-comunicaciones" class="load-more-btn" data-page-size="{{ initial_visible_rows }}" aria-label="Cargar m&aacute;s boletines">
+                        <span class="load-more-btn__text">Cargar m&aacute;s</span>
+                        <span class="load-more-btn__spinner" aria-hidden="true"></span>
+                    </button>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="empty-state" role="status" aria-live="polite">
+                    <h3 class="empty-state-title">No hay resultados</h3>
+                    <p class="empty-state-text">Prueba a ajustar los filtros o ampliar el periodo.</p>
+                    <a class="empty-state-action" href="{% url 'boletin' %}">Limpiar filtros</a>
+                </div>
+                {% endif %}
+            </section>
         </section>
+        <div class="filters-backdrop" aria-hidden="true"></div>
+
+        <div class="boletin-modal" id="boletinConfirmModal" aria-hidden="true">
+            <div class="boletin-modal__overlay" data-modal-close></div>
+            <div class="boletin-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="boletinConfirmTitle">
+                <h3 class="boletin-modal__title" id="boletinConfirmTitle">Confirmar lectura</h3>
+                <p class="boletin-modal__text">
+                    Vas a abrir el bolet&iacute;n <strong id="boletinConfirmName">seleccionado</strong>.
+                    Esta acci&oacute;n registrar&aacute; la lectura.
+                </p>
+                <div class="boletin-modal__actions">
+                    <button type="button" class="btn btn-outline-danger boletin-modal__cancel" data-modal-close>Cancelar</button>
+                    <button type="button" class="btn btn-primary boletin-modal__confirm" id="boletinConfirmAccept">Confirmar</button>
+                </div>
+            </div>
+        </div>
     </div>
+
     <script>
         (function () {
             const navEntry =
@@ -188,7 +275,6 @@
             const desde = document.getElementById("desde");
             const hasta = document.getElementById("hasta");
             if (!desde || !hasta) return;
-
             function syncDateLimits() {
                 hasta.min = desde.value || "";
                 desde.max = hasta.value || "";
@@ -196,14 +282,17 @@
                     hasta.value = desde.value;
                 }
             }
-
             desde.addEventListener("change", syncDateLimits);
             hasta.addEventListener("change", syncDateLimits);
             syncDateLimits();
         })();
     </script>
+    <script src="{% static 'js/filter_accordion.js' %}"></script>
+    <script src="{% static 'js/mis_comunicaciones_results.js' %}"></script>
+    <script src="{% static 'js/mis_comunicaciones_filters_toggle.js' %}"></script>
+    <script src="{% static 'js/boletin_confirmacion_lectura.js' %}"></script>
     <script src="{% static 'js/registrar_incidencia_combobox.js' %}"></script>
+    <script src="{% static 'js/user_menu.js' %}"></script>
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>
-

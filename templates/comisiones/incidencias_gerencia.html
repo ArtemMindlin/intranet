@@ -11,30 +11,41 @@
     <div class="page">
         <header class="top">
             <div class="brand">
-                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoci&oacute;n">
             </div>
 
                         <h1 class="page-title">Portal de comisiones</h1>
 
-            <div class="user-panel">
-                <a class="card user-block user-block-link" href="{% url 'mi_perfil' %}" aria-label="Ir a mi perfil">
+            <div class="user-panel" data-user-menu>
+                <button
+                    type="button"
+                    class="user-chip"
+                    data-user-menu-toggle
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-controls="user-menu-dropdown"
+                >
                     {% if foto_perfil_url %}
-                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                    <img class="avatar avatar-img user-chip__avatar" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre|default:usuario_login }}">
                     {% else %}
-                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                    <div class="avatar user-chip__avatar">{{ usuario_nombre|default:usuario_login|first|upper }}</div>
                     {% endif %}
-                    <div>
-                        <div class="meta-row">{{ usuario_nombre }}</div>
-                        <div class="meta-row">{{ usuario_login }}</div>
-                        <div class="meta-row">{{ sede }}</div>
-                        <div class="last-login">Ult. conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</div>
-                    </div>
-                </a>
-                <form class="header-logout-form" method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{% url 'login' %}">
-                    <button class="header-logout-btn" type="submit">Cerrar sesión</button>
-                </form>
+                    <span class="user-chip__meta">
+                        <span class="user-chip__name">{{ usuario_nombre|default:usuario_login }}</span>
+                        <span class="user-chip__last">&Uacute;lt. conexi&oacute;n: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
+                    </span>
+                    <span class="user-chip__chevron" aria-hidden="true">&#9662;</span>
+                </button>
+
+                <div id="user-menu-dropdown" class="user-dropdown" data-user-menu-dropdown role="menu" hidden>
+                    <a class="user-dropdown__item" href="{% url 'mi_perfil' %}" role="menuitem">Perfil</a>
+                    <div class="user-dropdown__separator" role="separator"></div>
+                    <form class="user-dropdown__logout-form" method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'login' %}">
+                        <button class="user-dropdown__item user-dropdown__item--danger" type="submit" role="menuitem">Cerrar sesi&oacute;n</button>
+                    </form>
+                </div>
             </div>
         </header>
 
@@ -43,10 +54,10 @@
             <a href="{% url 'incidencias_gerencia' %}" class="active">Incidencias</a>
             <div class="nav-more">
                 <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
-                    Más
+                    M&aacute;s
                 </button>
                 <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
-                    <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
+                    <a href="{% url 'boletin' %}" role="menuitem">Bolet&iacute;n</a>
                     <a href="{% url 'normativas' %}" role="menuitem">Normativas</a>
                     <a href="{% url 'manuales' %}" role="menuitem">Manuales</a>
                     <a href="{% url 'avisos_sin_leer' %}" role="menuitem">Avisos sin leer</a>
@@ -66,7 +77,7 @@
                     <input type="month" id="hasta" name="hasta" value="{{ fecha_hasta }}">
                 </div>
                 <div class="field">
-                    <label for="instalacion">Instalación</label>
+                    <label for="instalacion">Instalaci&oacute;n</label>
                     <input type="text" id="instalacion" name="instalacion" value="{{ instalacion }}">
                 </div>
                 <div class="field">
@@ -97,7 +108,7 @@
                 </button>
             </div>
             <div class="pending-box">
-                <span>Incidencias ptes. revisión</span>
+                <span>Incidencias ptes. revisi&oacute;n</span>
                 <strong>{{ pendientes_revision }}</strong>
             </div>
         </section>
@@ -107,13 +118,13 @@
                 <table class="manager-table manager-inc-table">
                     <thead>
                         <tr>
-                            <th>Empleado / Matrícula</th>
+                            <th>Empleado / Matr&iacute;cula</th>
                             <th>Fecha incidencia</th>
                             <th>Tipo incidencia</th>
                             <th>Detalle incidencia</th>
                             <th>Detalle</th>
                             <th>Estado</th>
-                            <th>Validación</th>
+                            <th>Validaci&oacute;n</th>
                             <th>Sel.</th>
                         </tr>
                     </thead>
@@ -131,11 +142,11 @@
                             <td class="center">{{ incidencia.estado }}</td>
                             <td class="center">
                                 {% if incidencia.validacion_ok %}
-                                <span class="status ok">✓</span>
-                                <span class="status no">✕</span>
+                                <span class="status ok">âœ“</span>
+                                <span class="status no">âœ•</span>
                                 {% else %}
-                                <span class="status muted">✓</span>
-                                <span class="status muted">✕</span>
+                                <span class="status muted">âœ“</span>
+                                <span class="status muted">âœ•</span>
                                 {% endif %}
                             </td>
                             <td class="center"><input type="checkbox" aria-label="Seleccionar incidencia"></td>
@@ -185,8 +196,10 @@
             syncDateLimits();
         })();
     </script>
+    <script src="{% static 'js/user_menu.js' %}"></script>
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>
+
 
 

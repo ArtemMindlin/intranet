@@ -3,6 +3,7 @@
 Aplicacion web interna construida con Django para gestionar ventas, comisiones e incidencias en equipos comerciales.
 
 ## Contenido
+
 1. [Resumen funcional](#resumen-funcional)
 2. [Stack tecnologico](#stack-tecnologico)
 3. [Arquitectura del proyecto](#arquitectura-del-proyecto)
@@ -17,6 +18,7 @@ Aplicacion web interna construida con Django para gestionar ventas, comisiones e
 12. [Licencia](#licencia)
 
 ## Resumen funcional
+
 El sistema permite:
 
 - Visualizar ventas personales y su comision aprobada.
@@ -26,6 +28,7 @@ El sistema permite:
 - Ofrecer vistas de gerencia para comisiones e incidencias (estado parcial, ver limitaciones).
 
 ## Stack tecnologico
+
 - Python 3.14 (verificado en desarrollo).
 - Django 6.0.2.
 - SQLite como base de datos por defecto.
@@ -35,6 +38,7 @@ El sistema permite:
 Dependencias exactas en `requirements.txt`.
 
 ## Arquitectura del proyecto
+
 Estructura principal:
 
 ```text
@@ -56,6 +60,7 @@ Puntos clave de arquitectura:
 - Separacion de settings por entorno (`intranet/settings/`).
 
 ## Modelo de datos
+
 Entidades principales:
 
 - `Venta`: informacion comercial por operacion (matricula, IDV, cliente, tipo de venta, etc.).
@@ -72,7 +77,9 @@ Relaciones relevantes:
 - `Perfil.user` -> `auth.User` (OneToOne).
 
 ## Puesta en marcha local
+
 ### Opcion rapida en Windows (script .bat)
+
 Si estas en Windows, puedes preparar y arrancar el proyecto con:
 
 ```powershell
@@ -98,41 +105,50 @@ set SEED=1
 ```
 
 ### Opcion manual (Windows/Linux/macOS)
+
 #### 1) Clonar y entrar al proyecto
+
 ```bash
 git clone <url-del-repositorio>
 cd intranet
 ```
 
 #### 2) Crear entorno virtual
+
 Windows (PowerShell):
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
 Linux/macOS:
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 #### 3) Instalar dependencias
+
 ```bash
 pip install -r requirements.txt
 ```
 
 #### 4) Aplicar migraciones
+
 ```bash
 python manage.py migrate
 ```
 
 #### 5) Crear usuario administrador
+
 ```bash
 python manage.py createsuperuser
 ```
 
 #### 6) Ejecutar servidor de desarrollo
+
 ```bash
 python manage.py runserver
 ```
@@ -143,6 +159,7 @@ Acceso local:
 - Admin Django: `http://127.0.0.1:8000/admin/`
 
 ## Datos demo reproducibles (seed)
+
 Este proyecto incluye un management command para poblar datos de ejemplo sin depender de subir SQLite al repositorio.
 
 Comando base:
@@ -187,10 +204,11 @@ Notas de repositorio:
 - Cada clon puede reconstruir su BD local con migraciones + seed.
 
 ## Configuracion y entornos
+
 Configuracion activa:
 
-- `manage.py` usa `DJANGO_SETTINGS_MODULE=intranet.settings`.
-- `intranet/settings/__init__.py` importa `local.py` por defecto.
+1. `manage.py` usa `DJANGO_SETTINGS_MODULE=intranet.settings`.
+1. `intranet/settings/__init__.py` importa `local.py` por defecto.
 
 Archivos de settings:
 
@@ -206,6 +224,7 @@ Recomendaciones para produccion:
 - Activar cookies seguras y HTTPS.
 
 ## Flujos por rol
+
 El sistema usa grupos de Django para comportamiento por rol:
 
 - `Vendedor` y `Jefe de ventas`:
@@ -216,6 +235,7 @@ El sistema usa grupos de Django para comportamiento por rol:
   - Existe implementacion de vistas y plantillas, con una limitacion actual en routing (ver abajo).
 
 ## Rutas principales
+
 - `/` -> login.
 - `/accounts/login/` -> login.
 - `/accounts/logout/` -> logout.
@@ -228,6 +248,7 @@ El sistema usa grupos de Django para comportamiento por rol:
 - `/comisiones/incidencias/` -> incidencias para gerencia.
 
 ## Calidad, estado actual y limitaciones
+
 Verificaciones ejecutadas:
 
 - `python manage.py check` -> sin incidencias del sistema.
@@ -248,6 +269,7 @@ Limitaciones detectadas en el estado actual:
    - `SECRET_KEY` y `DEBUG` estan definidos para desarrollo en settings base/local.
 
 ## Contribucion
+
 Normas y flujo de trabajo en:
 
 - `./.github/CONTRIBUTING.md`
@@ -260,4 +282,5 @@ Resumen:
 - Revisar manualmente cualquier cambio asistido por IA antes de merge.
 
 ## Licencia
+
 Distribuido bajo licencia MIT. Ver `LICENSE`.

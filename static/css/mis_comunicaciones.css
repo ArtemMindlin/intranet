@@ -1,124 +1,121 @@
 @import url("mis_ventas.css");
 
-.inc-filters {
-    margin-bottom: 10px;
-    padding: 10px;
+.mis-comunicaciones-page .content-topbar {
+    justify-content: flex-start;
 }
 
-.inc-filters-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-    align-items: end;
-}
-
-.inc-filters .field {
-    margin-bottom: 0;
-}
-
-.inc-filters label {
-    display: block;
-    font-size: 15px;
-    margin-bottom: 5px;
-    color: #3b3b3b;
-}
-
-.inc-filters input,
-.inc-filters select,
-.inc-filters .select-combobox__search {
-    width: 100%;
-    height: 36px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    background: #fff;
-    padding: 6px 10px;
-    font-size: 15px;
+.mis-comunicaciones-page .mis-comunicaciones-results tbody td.is-primary-col {
     font-weight: 600;
 }
 
-.inc-filters button {
-    width: 100%;
-    height: 36px;
-    border: none;
-    background: var(--accent);
-    color: #fff;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.inc-filters .field-submit {
-    justify-self: start;
-    min-width: 180px;
-}
-
-.th-sort-wrap {
-    position: relative;
-    display: block;
-    width: 100%;
-    text-align: center;
-    padding: 0 26px;
-}
-
-.sort-icon-btn {
-    width: 20px;
-    height: 20px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 50%;
-    background: #fff;
-    color: #333;
+.mis-comunicaciones-page .boletin-link {
+    color: #1f2937;
     text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    line-height: 1;
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    font-weight: 600;
 }
 
-.sort-icon-btn:hover {
-    background: #ececec;
-}
-
-.sort-icon-btn.active {
-    border-color: #9d9d9d;
-    background: #e7e7e7;
-    color: #1f1f1f;
-}
-
-.communications-wrap {
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    background: #f8f8f8;
-    box-shadow: none;
-    border-radius: 0 0 14px 14px;
-    padding: 14px;
-}
-
-.boletin-link {
-    color: #1f1f1f;
-    text-decoration: none;
-    font-weight: 700;
-}
-
-.boletin-link:hover {
+.mis-comunicaciones-page .boletin-link:hover {
     text-decoration: underline;
 }
 
-@media (max-width: 1200px) {
-    .inc-filters-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+.mis-comunicaciones-page .pill-link {
+    text-decoration: none;
 }
 
-@media (max-width: 768px) {
-    .inc-filters-grid {
-        grid-template-columns: 1fr;
-    }
+.mis-comunicaciones-page .btn-detalle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0 7px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+    white-space: nowrap;
+}
 
-    .field-submit {
-        justify-self: stretch;
-        min-width: 0;
-    }
+.mis-comunicaciones-page .btn-detalle:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    text-decoration: none;
+}
+
+.mis-comunicaciones-page .btn-detalle:focus-visible {
+    outline: 2px solid rgba(16, 185, 129, 0.35);
+    outline-offset: 2px;
+}
+
+.mis-comunicaciones-page .btn-detalle__icon {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.mis-comunicaciones-page .btn-detalle__text {
+    line-height: 1;
+}
+
+.mis-comunicaciones-page .boletin-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 1200;
+}
+
+.mis-comunicaciones-page .boletin-modal.is-open {
+    display: block;
+}
+
+.mis-comunicaciones-page .boletin-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+}
+
+.mis-comunicaciones-page .boletin-modal__dialog {
+    position: relative;
+    max-width: 460px;
+    width: calc(100% - 24px);
+    margin: 14vh auto 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.mis-comunicaciones-page .boletin-modal__title {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.mis-comunicaciones-page .boletin-modal__text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #374151;
+}
+
+.mis-comunicaciones-page .boletin-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.mis-comunicaciones-page .boletin-modal__actions .btn {
+    min-width: 110px;
+}
+
+body.boletin-modal-open {
+    overflow: hidden;
 }

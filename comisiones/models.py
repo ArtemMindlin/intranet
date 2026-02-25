@@ -121,8 +121,57 @@ class Incidencia(models.Model):
         return f"Incidencia {self.id or '-'} - {self.tipo}"
 
 
+class Boletin(models.Model):
+    boletin = models.CharField(max_length=200)
+    fecha = models.DateField(default=date.today)
+    marca = models.CharField(max_length=100, blank=True, default="")
+    tipo = models.CharField(max_length=100, blank=True, default="")
+    archivo = models.FileField(upload_to="boletines/", blank=True, null=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["-fecha", "-id"]
+
+    def __str__(self):
+        return f"{self.boletin} ({self.fecha:%d/%m/%Y})"
+
+
+class LecturaBoletin(models.Model):
+    boletin = models.ForeignKey(
+        Boletin, on_delete=models.CASCADE, related_name="lecturas"
+    )
+    usuario = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="lecturas_boletin"
+    )
+    leido_en = models.DateTimeField(auto_now_add=True)
+    confirmado = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["boletin", "usuario"], name="uniq_lectura_boletin_usuario"
+            )
+        ]
+        ordering = ["-leido_en"]
+
+    def __str__(self):
+        return f"{self.usuario.username} -> {self.boletin.boletin}"
+
+
 class Perfil(models.Model):
+    AREA_VENTAS = "ventas"
+    AREA_POSTVENTA = "postventa"
+    AREA_CHOICES = [
+        (AREA_VENTAS, "Area de Ventas"),
+        (AREA_POSTVENTA, "Area de Postventa"),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    dni = models.CharField(max_length=20, blank=True, default="")
+    telefono = models.CharField(max_length=20, blank=True, default="")
+    area = models.CharField(
+        max_length=20, choices=AREA_CHOICES, default=AREA_VENTAS
+    )
     sede = models.CharField(max_length=100, blank=True, default="")
     ha_visto_perfil_inicial = models.BooleanField(default=False)
     jefe_ventas = models.ForeignKey(

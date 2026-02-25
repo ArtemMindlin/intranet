@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Venta, Comision, Perfil, Incidencia
+from .models import Boletin, Comision, Incidencia, LecturaBoletin, Perfil, Venta
 
 
 @admin.register(Venta)
@@ -62,6 +62,9 @@ class IncidenciaAdmin(admin.ModelAdmin):
 class PerfilAdmin(admin.ModelAdmin):
     list_display = (
         "user",
+        "dni",
+        "telefono",
+        "area",
         "sede",
         "jefe_ventas",
         "gerente",
@@ -72,13 +75,23 @@ class PerfilAdmin(admin.ModelAdmin):
         "user__username",
         "user__first_name",
         "user__last_name",
+        "dni",
+        "telefono",
+        "area",
         "sede",
         "jefe_ventas__username",
+        "jefe_ventas__first_name",
+        "jefe_ventas__last_name",
         "gerente__username",
+        "gerente__first_name",
+        "gerente__last_name",
         "director_comercial__username",
+        "director_comercial__first_name",
+        "director_comercial__last_name",
     )
     list_select_related = ("user", "jefe_ventas", "gerente", "director_comercial")
     autocomplete_fields = ("user", "jefe_ventas", "gerente", "director_comercial")
+    list_filter = ("area", "sede")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "jefe_ventas":
@@ -93,4 +106,23 @@ class PerfilAdmin(admin.ModelAdmin):
             kwargs["queryset"] = db_field.related_model.objects.filter(
                 groups__name="Director Comercial"
             ).distinct()
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name in {"jefe_ventas", "gerente", "director_comercial"}:
+            formfield.label_from_instance = (
+                lambda obj: obj.get_full_name().strip() or obj.username
+            )
+        return formfield
+
+
+@admin.register(Boletin)
+class BoletinAdmin(admin.ModelAdmin):
+    list_display = ("boletin", "fecha", "marca", "tipo", "activo")
+    list_filter = ("activo", "fecha", "marca", "tipo")
+    search_fields = ("boletin", "marca", "tipo")
+
+
+@admin.register(LecturaBoletin)
+class LecturaBoletinAdmin(admin.ModelAdmin):
+    list_display = ("boletin", "usuario", "leido_en", "confirmado")
+    list_filter = ("confirmado", "leido_en")
+    search_fields = ("boletin__boletin", "usuario__username", "usuario__first_name")

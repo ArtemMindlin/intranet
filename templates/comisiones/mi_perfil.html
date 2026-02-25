@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 {% load static %}
 <head>
@@ -7,15 +7,14 @@
     <title>Comisiones - Mi Perfil</title>
     <link rel="stylesheet" href="{% static 'css/mi_perfil.css' %}">
 </head>
-<body>
+<body class="mis-ventas-page mi-perfil-page">
     <div class="page">
         <header class="top">
             <div class="brand">
-                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automoción">
+                <img class="brand-logo" src="{% static 'img/logos/logo-marcos-automocion.png' %}" alt="Marcos Automocion">
             </div>
 
-                    
-                    <h1 class="page-title">Portal de comisiones</h1>
+            <h1 class="page-title">Portal de comisiones</h1>
         </header>
 
         <nav class="nav">
@@ -23,10 +22,10 @@
             <a href="{% url 'mis_incidencias' %}">Mis Incidencias</a>
             <div class="nav-more">
                 <button type="button" class="nav-more-toggle" aria-haspopup="true" aria-expanded="false">
-                    Más
+                    M&aacute;s
                 </button>
                 <div class="nav-more-menu" role="menu" aria-label="Secciones secundarias">
-                    <a href="{% url 'boletin' %}" role="menuitem">Boletin</a>
+                    <a href="{% url 'boletin' %}" role="menuitem">Bolet&iacute;n</a>
                     <a href="{% url 'normativas' %}" role="menuitem">Normativas</a>
                     <a href="{% url 'manuales' %}" role="menuitem">Manuales</a>
                     <a href="{% url 'avisos_sin_leer' %}" role="menuitem">Avisos sin leer</a>
@@ -35,73 +34,114 @@
             </div>
         </nav>
 
-        <section class="profile-main profile-main-compact">
-            <article class="profile-card personal">
-                <div class="profile-top">
-                    {% if foto_perfil_url %}
-                    <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
-                    {% else %}
-                    <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+        <section class="content profile-content">
+            <section class="profile-main profile-main-compact">
+                <article class="card profile-card personal">
+                    {% if messages %}
+                    <section class="flash-messages">
+                        {% for message in messages %}
+                        <div class="flash-message {{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    </section>
                     {% endif %}
-                    <p class="last-login">Última conexión: {{ ultima_conexion|date:"d/m/Y H:i" }}</p>
-                    <form class="logout-form" method="post" action="{% url 'logout' %}">
+
+                    <div class="profile-top">
+                        {% if foto_perfil_url %}
+                        <img class="avatar avatar-img" src="{{ foto_perfil_url }}" alt="Foto de perfil de {{ usuario_nombre }}">
+                        {% else %}
+                        <div class="avatar">{{ usuario_nombre|first|upper }}</div>
+                        {% endif %}
+                        <p class="last-login">Ultima conexion: {{ ultima_conexion|date:"d/m/Y H:i" }}</p>
+                    </div>
+
+                    <form
+                        id="perfilEditableForm"
+                        method="post"
+                        class="profile-edit-form {% if perfil_edit_mode %}is-editing{% endif %}"
+                        data-start-editing="{% if perfil_edit_mode %}1{% else %}0{% endif %}"
+                    >
                         {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'login' %}">
-                        <button class="logout-btn" type="submit">Cerrar sesión</button>
+                        <input type="hidden" name="accion" value="guardar">
+
+                        <div class="data-grid">
+                            <label>Nombre completo</label>
+                            <div class="value-line">{{ usuario_nombre|default:"--" }}</div>
+
+                            <label>DNI</label>
+                            <div class="value-line">{{ dni|default:"--" }}</div>
+
+                            <label for="id_email">Email</label>
+                            <input
+                                id="id_email"
+                                name="email"
+                                type="email"
+                                class="value-input js-editable-field"
+                                value="{{ editable_form.email.value|default:'' }}"
+                                disabled
+                                data-initial="{{ editable_form.email.value|default:'' }}"
+                            >
+                            {% if editable_form.email.errors %}
+                            <p class="field-error">{{ editable_form.email.errors.0 }}</p>
+                            {% endif %}
+
+                            <label for="id_telefono">Telefono</label>
+                            <input
+                                id="id_telefono"
+                                name="telefono"
+                                type="text"
+                                class="value-input js-editable-field"
+                                value="{{ editable_form.telefono.value|default:'' }}"
+                                disabled
+                                data-initial="{{ editable_form.telefono.value|default:'' }}"
+                            >
+                            {% if editable_form.telefono.errors %}
+                            <p class="field-error">{{ editable_form.telefono.errors.0 }}</p>
+                            {% endif %}
+
+                            <label>Perfil</label>
+                            <div class="value-line">{{ perfil_rol|default:"--" }}</div>
+                        </div>
+
                     </form>
-                </div>
 
-                <div class="data-grid">
-                    <label>Nombre completo</label>
-                    <div class="value-line">{{ usuario_nombre|upper }}</div>
+                    <div class="profile-actions">
+                        <div class="profile-form-actions">
+                            <button type="button" class="btn btn-outline-secondary" id="editarDatosBtn">Editar datos</button>
+                            <button type="submit" form="perfilEditableForm" class="btn btn-primary{% if not perfil_edit_mode %} is-hidden{% endif %}" id="guardarCambiosBtn" {% if not perfil_edit_mode %}disabled{% endif %}>
+                                Guardar cambios
+                            </button>
+                            <button type="button" class="btn btn-secondary{% if not perfil_edit_mode %} is-hidden{% endif %}" id="cancelarEdicionBtn">
+                                Cancelar
+                            </button>
+                        </div>
+                        <form class="profile-logout-form" method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'login' %}">
+                            <button class="btn btn-secondary profile-logout-btn" type="submit">Cerrar sesion</button>
+                        </form>
+                    </div>
+                </article>
 
-                    <label>DNI</label>
-                    <div class="value-line">{{ dni }}</div>
+                <article class="card profile-card organization">
+                    <div class="areas">
+                        <label><input type="radio" name="area" value="ventas" {% if area == 'ventas' %}checked{% endif %} disabled> Area de Ventas</label>
+                        <label><input type="radio" name="area" value="postventa" {% if area == 'postventa' %}checked{% endif %} disabled> Area de Postventa</label>
+                    </div>
 
-                    <label>Email</label>
-                    <div class="value-line">{{ email }}</div>
+                    <div class="data-grid small-gap">
+                        {% for label, value in campos_organizacion %}
+                        <label>{{ label }}</label>
+                        <div class="value-line">{{ value|default:"--" }}</div>
+                        {% endfor %}
+                    </div>
 
-                    <label>Teléfono</label>
-                    <div class="value-line">{{ telefono }}</div>
-
-                    <label>Perfil</label>
-                    <div class="value-line">{{ perfil_rol|upper }}</div>
-                </div>
-
-                <button class="action-btn" type="button">Guardar datos</button>
-            </article>
-
-            <article class="profile-card organization">
-                <div class="areas">
-                    <label><input type="radio" name="area" value="ventas" {% if area == 'ventas' %}checked{% endif %}> Área de Ventas</label>
-                    <label><input type="radio" name="area" value="postventa" {% if area == 'postventa' %}checked{% endif %}> Área de Postventa</label>
-                </div>
-
-                <div class="data-grid small-gap">
-                    <label>Concesionario</label>
-                    <div class="value-line">{{ concesionario|upper }}</div>
-
-                    <label>Sede</label>
-                    <div class="value-line">{{ sede|upper }}</div>
-
-                    <label>Dirección Comercial</label>
-                    <div class="value-line">{{ direccion_comercial|upper }}</div>
-
-                    <label>Gerencia</label>
-                    <div class="value-line">{{ gerencia|upper }}</div>
-
-                    <label>Jefatura de Ventas</label>
-                    <div class="value-line">{{ jefatura_ventas|upper }}</div>
-
-                    <label>Responsable VO</label>
-                    <div class="value-line">{{ responsable_vo|upper }}</div>
-                </div>
-
-                <button class="action-btn" type="button">Solicitar revisión</button>
-            </article>
+                    <button class="btn btn-primary action-btn" type="button">Solicitar revision</button>
+                </article>
+            </section>
         </section>
     </div>
     <script src="{% static 'js/nav_tabs.js' %}"></script>
+    <script src="{% static 'js/mi_perfil.js' %}"></script>
 </body>
 </html>
 
