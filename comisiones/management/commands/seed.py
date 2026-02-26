@@ -214,10 +214,20 @@ class Command(BaseCommand):
             "vendedor_2": "600000006",
             "vendedor_3": "600000007",
         }
+        concesionario_por_usuario = {
+            "director": "Francisco Marcos",
+            "gerente": "Francisco Marcos",
+            "jefe": "Francisco Marcos",
+            "jefe_postventa": "Francisco Marcos",
+            "vendedor_1": "Francisco Marcos",
+            "vendedor_2": "Francisco Marcos",
+            "vendedor_3": "Francisco Marcos",
+        }
 
         director_perfil, _ = Perfil.objects.get_or_create(user=users["director"])
         director_perfil.dni = dni_por_usuario["director"]
         director_perfil.telefono = telefono_por_usuario["director"]
+        director_perfil.concesionario = concesionario_por_usuario["director"]
         director_perfil.sede = sede_principal
         director_perfil.area = Perfil.AREA_VENTAS
         director_perfil.save()
@@ -225,6 +235,7 @@ class Command(BaseCommand):
         gerente_perfil, _ = Perfil.objects.get_or_create(user=users["gerente"])
         gerente_perfil.dni = dni_por_usuario["gerente"]
         gerente_perfil.telefono = telefono_por_usuario["gerente"]
+        gerente_perfil.concesionario = concesionario_por_usuario["gerente"]
         gerente_perfil.sede = sede_principal
         gerente_perfil.area = Perfil.AREA_VENTAS
         gerente_perfil.director_comercial = users["director"]
@@ -233,6 +244,7 @@ class Command(BaseCommand):
         jefe_perfil, _ = Perfil.objects.get_or_create(user=users["jefe"])
         jefe_perfil.dni = dni_por_usuario["jefe"]
         jefe_perfil.telefono = telefono_por_usuario["jefe"]
+        jefe_perfil.concesionario = concesionario_por_usuario["jefe"]
         jefe_perfil.sede = sede_principal
         jefe_perfil.area = Perfil.AREA_VENTAS
         jefe_perfil.gerente = users["gerente"]
@@ -244,6 +256,7 @@ class Command(BaseCommand):
         )
         jefe_postventa_perfil.dni = dni_por_usuario["jefe_postventa"]
         jefe_postventa_perfil.telefono = telefono_por_usuario["jefe_postventa"]
+        jefe_postventa_perfil.concesionario = concesionario_por_usuario["jefe_postventa"]
         jefe_postventa_perfil.sede = sede_principal
         jefe_postventa_perfil.area = Perfil.AREA_POSTVENTA
         jefe_postventa_perfil.gerente = users["gerente"]
@@ -259,6 +272,7 @@ class Command(BaseCommand):
             perfil, _ = Perfil.objects.get_or_create(user=users[vendedor_key])
             perfil.dni = dni_por_usuario[vendedor_key]
             perfil.telefono = telefono_por_usuario[vendedor_key]
+            perfil.concesionario = concesionario_por_usuario[vendedor_key]
             perfil.sede = sede_principal
             perfil.area = area
             perfil.jefe_ventas = jefe_ref

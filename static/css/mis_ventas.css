@@ -1872,10 +1872,34 @@ td.bold {
     gap: 2px;
 }
 
+.user-chip__identity {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .user-chip__name {
     font-size: 14px;
     font-weight: 600;
     line-height: 1.2;
+    white-space: nowrap;
+}
+
+.user-chip__separator {
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.user-chip__sede {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: #4b5563;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2002,6 +2026,10 @@ td.bold {
         font-size: 11px;
     }
 
+    .user-chip__sede {
+        font-size: 12px;
+    }
+
     .user-dropdown {
         min-width: 210px;
     }
@@ -2018,5 +2046,9 @@ td.bold {
 
     .user-chip__meta {
         max-width: 130px;
+    }
+
+    .user-chip__separator {
+        display: none;
     }
 }

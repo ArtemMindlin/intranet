@@ -32,6 +32,7 @@ def _contexto_base_usuario(request, perfil):
     return {
         "usuario_nombre": request.user.get_full_name() or request.user.username,
         "usuario_login": request.user.username,
+        "concesionario": perfil.concesionario,
         "sede": perfil.sede,
         "foto_perfil_url": perfil.foto_perfil.url if perfil.foto_perfil else "",
         "ultima_conexion": request.user.last_login,
@@ -1009,6 +1010,7 @@ def mi_perfil(request):
         else "Jefatura de Ventas"
     )
     campos_organizacion = [
+        ("Concesionario", perfil.concesionario or "--"),
         ("Sede", perfil.sede or "--"),
         (jefatura_label, _nombre_usuario(perfil.jefe_ventas)),
         ("Gerente", _nombre_usuario(perfil.gerente)),

@@ -172,6 +172,7 @@ class Perfil(models.Model):
     area = models.CharField(
         max_length=20, choices=AREA_CHOICES, default=AREA_VENTAS
     )
+    concesionario = models.CharField(max_length=120, blank=True, default="")
     sede = models.CharField(max_length=100, blank=True, default="")
     ha_visto_perfil_inicial = models.BooleanField(default=False)
     jefe_ventas = models.ForeignKey(

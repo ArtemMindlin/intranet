@@ -130,6 +130,10 @@ LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/redirigir/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
+AUTHENTICATION_BACKENDS = [
+    "comisiones.auth_backends.DNIAutenticacionBackend",
+]
+
 # Correo para notificaciones de incidencias.
 # Usa variables de entorno para no guardar credenciales en el repositorio.
 # EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")

@@ -65,6 +65,7 @@ class PerfilAdmin(admin.ModelAdmin):
         "dni",
         "telefono",
         "area",
+        "concesionario",
         "sede",
         "jefe_ventas",
         "gerente",
@@ -78,6 +79,7 @@ class PerfilAdmin(admin.ModelAdmin):
         "dni",
         "telefono",
         "area",
+        "concesionario",
         "sede",
         "jefe_ventas__username",
         "jefe_ventas__first_name",
@@ -91,7 +93,7 @@ class PerfilAdmin(admin.ModelAdmin):
     )
     list_select_related = ("user", "jefe_ventas", "gerente", "director_comercial")
     autocomplete_fields = ("user", "jefe_ventas", "gerente", "director_comercial")
-    list_filter = ("area", "sede")
+    list_filter = ("area", "concesionario", "sede")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "jefe_ventas":

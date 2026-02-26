@@ -6,41 +6,45 @@
     <title>Iniciar sesión</title>
     <link rel="stylesheet" href="{% static 'css/login.css' %}">
 </head>
-<body>
-    <div class="login-box">
-      <h2>Iniciar sesión</h2>
-      <form method="post">
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-        <div class="alert alert-error">
-          {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endif %}
+<body class="login-page">
+    <div class="page">
+      <main class="login-content">
+        <section class="login-box card">
+          <h2>Iniciar sesión</h2>
+          <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-error">
+              {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+            {% endif %}
 
-        <label for="id_username">Usuario:</label>
-        {{ form.username }}
-        {% if form.username.errors %}
-        <div class="field-error">
-          {% for error in form.username.errors %}
-          <p>{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endif %}
+            <label for="id_username">DNI:</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+            <div class="field-error">
+              {% for error in form.username.errors %}
+              <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+            {% endif %}
 
-        <label for="id_password">Contraseña:</label>
-        {{ form.password }}
-        {% if form.password.errors %}
-        <div class="field-error">
-          {% for error in form.password.errors %}
-          <p>{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endif %}
+            <label for="id_password">Contraseña:</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+            <div class="field-error">
+              {% for error in form.password.errors %}
+              <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+            {% endif %}
 
-        <button type="submit">Entrar</button>
-      </form>
+            <button type="submit">Entrar</button>
+          </form>
+        </section>
+      </main>
     </div>
 </body>
 </html>

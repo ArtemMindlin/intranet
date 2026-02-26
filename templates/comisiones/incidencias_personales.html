@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 {% load static %}
 <head>
@@ -31,7 +31,11 @@
                     <div class="avatar user-chip__avatar">{{ usuario_nombre|default:usuario_login|first|upper }}</div>
                     {% endif %}
                     <span class="user-chip__meta">
-                        <span class="user-chip__name">{{ usuario_nombre|default:usuario_login }}</span>
+                        <span class="user-chip__identity">
+                            <span class="user-chip__name">{{ usuario_nombre|default:usuario_login }}</span>
+                            <span class="user-chip__separator" aria-hidden="true">&middot;</span>
+                            <span class="user-chip__sede">{{ sede|default:"--" }}</span>
+                        </span>
                         <span class="user-chip__last">&Uacute;lt. conexi&oacute;n: {{ ultima_conexion|date:"d/m/Y H:i" }}</span>
                     </span>
                     <span class="user-chip__chevron" aria-hidden="true">&#9662;</span>
@@ -249,10 +253,10 @@
                         <tbody>
                             {% for incidencia in incidencias %}
                             <tr data-result-row {% if forloop.counter > initial_visible_rows %}hidden{% endif %}>
-                                <td class="is-primary-col col-matricula">{{ incidencia.matricula_display|default:"—" }}</td>
+                                <td class="is-primary-col col-matricula">{{ incidencia.matricula_display|default:"â€”" }}</td>
                                 <td class="center col-fecha">{{ incidencia.fecha_incidencia|date:"d/m/Y" }}</td>
-                                <td class="col-tipo">{{ incidencia.tipo|default:"—" }}</td>
-                                <td class="col-detalle-incidencia">{{ incidencia.detalle|default:"—" }}</td>
+                                <td class="col-tipo">{{ incidencia.tipo|default:"â€”" }}</td>
+                                <td class="col-detalle-incidencia">{{ incidencia.detalle|default:"â€”" }}</td>
                                 <td class="center col-detalle-btn">
                                     <a class="pill-link btn-detalle btn-detalle--view" href="{% url 'detalle_incidencia_personal' incidencia.id %}?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}{% if filtros.matricula %}&matricula={{ filtros.matricula|urlencode }}{% endif %}{% if filtros.estado %}&estado={{ filtros.estado|urlencode }}{% endif %}&sort={{ sort_by }}&dir={{ sort_dir }}" aria-label="Ver detalle de incidencia">
                                         <span class="btn-detalle__icon" aria-hidden="true">&#128065;</span>
@@ -261,7 +265,7 @@
                                 </td>
                                 <td class="center is-secondary-col col-estado">
                                     {% with estado_txt=incidencia.get_estado_display|lower %}
-                                        {% if incidencia.estado == "pte_revision" or estado_txt == "pte. revision" or estado_txt == "pte. revisión" or estado_txt == "pendiente" or estado_txt == "pendiente revision" or estado_txt == "pendiente revisión" %}
+                                        {% if incidencia.estado == "pte_revision" or estado_txt == "pte. revision" or estado_txt == "pte. revisiÃ³n" or estado_txt == "pendiente" or estado_txt == "pendiente revision" or estado_txt == "pendiente revisiÃ³n" %}
                                             <span class="status-badge status-badge--pending">{{ incidencia.get_estado_display }}</span>
                                         {% elif incidencia.estado == "aceptada" or estado_txt == "resuelto" or estado_txt == "resuelta" %}
                                             <span class="status-badge status-badge--success">{{ incidencia.get_estado_display }}</span>
@@ -336,4 +340,5 @@
     <script src="{% static 'js/nav_tabs.js' %}"></script>
 </body>
 </html>
+
 

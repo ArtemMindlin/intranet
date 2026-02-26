@@ -1,286 +1,229 @@
 # Intranet - Portal de Comisiones
 
-Aplicacion web interna construida con Django para gestionar ventas, comisiones e incidencias en equipos comerciales.
+Aplicacion interna en Django para gestion comercial: ventas, comisiones, incidencias, perfil de usuario y boletines.
 
 ## Contenido
 
-1. [Resumen funcional](#resumen-funcional)
-2. [Stack tecnologico](#stack-tecnologico)
-3. [Arquitectura del proyecto](#arquitectura-del-proyecto)
-4. [Modelo de datos](#modelo-de-datos)
-5. [Puesta en marcha local](#puesta-en-marcha-local)
-6. [Datos demo reproducibles (seed)](#datos-demo-reproducibles-seed)
-7. [Configuracion y entornos](#configuracion-y-entornos)
-8. [Flujos por rol](#flujos-por-rol)
-9. [Rutas principales](#rutas-principales)
-10. [Calidad, estado actual y limitaciones](#calidad-estado-actual-y-limitaciones)
-11. [Contribucion](#contribucion)
-12. [Licencia](#licencia)
+1. Resumen funcional
+2. Stack tecnico
+3. Estructura del proyecto
+4. Modelo de datos
+5. Autenticacion (login por DNI)
+6. Puesta en marcha local
+7. Datos demo (seed)
+8. Configuracion de email
+9. Rutas principales
+10. Estado actual y limitaciones
 
 ## Resumen funcional
 
 El sistema permite:
 
-- Visualizar ventas personales y su comision aprobada.
-- Registrar incidencias asociadas a una venta concreta o de tipo general.
-- Consultar historial de incidencias con filtros y detalle navegable.
-- Gestionar perfiles comerciales con jerarquia organizativa.
-- Ofrecer vistas de gerencia para comisiones e incidencias (estado parcial, ver limitaciones).
+- Login con DNI + contrasena.
+- Vista `Mis Ventas` con filtros mensuales, ordenacion y detalle comercial.
+- Vista `Mis Incidencias` con filtros, detalle y navegacion entre incidencias.
+- Registro de nuevas incidencias (generales o asociadas a matriculas del vendedor).
+- Perfil de usuario con datos personales y estructura organizativa.
+- Modulo `Boletin` y secciones relacionadas (`Normativas`, `Manuales`, `Avisos sin leer`, `Vehiculos en uso`).
+- Registro de lectura de boletines al confirmar descarga.
+- Vistas de gerencia para comisiones e incidencias.
 
-## Stack tecnologico
+## Stack tecnico
 
-- Python 3.14 (verificado en desarrollo).
-- Django 6.0.2.
-- SQLite como base de datos por defecto.
-- Plantillas Django (server-side rendering), CSS y recursos estaticos.
-- Pillow para gestion de imagenes de perfil.
+- Python 3.14
+- Django 6.0.2
+- SQLite (por defecto en local)
+- Plantillas Django + CSS + JS vanilla
+- Pillow (imagenes de perfil)
 
-Dependencias exactas en `requirements.txt`.
+Dependencias: `requirements.txt`.
 
-## Arquitectura del proyecto
-
-Estructura principal:
+## Estructura del proyecto
 
 ```text
 .
-|- intranet/                  # Proyecto Django (settings, urls, asgi/wsgi)
-|  |- settings/               # Configuracion modular (base/local/production)
-|- comisiones/                # App de negocio (modelos, vistas, urls, admin)
-|- templates/                 # Plantillas HTML
-|- static/                    # CSS e imagenes
-|- media/                     # Archivos subidos (foto de perfil)
+|- intranet/
+|  |- settings/
+|  |  |- base.py
+|  |  |- local.py
+|  |  |- production.py
+|  |  |- __init__.py        # actualmente importa local.py
+|  |- urls.py
+|- comisiones/
+|  |- models.py
+|  |- views.py
+|  |- forms.py
+|  |- auth_backends.py
+|  |- admin.py
+|  |- urls.py
+|  |- management/commands/seed.py
+|- templates/
+|  |- registration/login.html
+|  |- comisiones/*.html
+|- static/
+|  |- css/*.css
+|  |- js/*.js
+|  |- img/
+|- media/
 |- manage.py
 ```
 
-Puntos clave de arquitectura:
-
-- Autenticacion con el sistema de usuarios y grupos nativo de Django.
-- Un `Perfil` por usuario (creado automaticamente mediante señal `post_save`).
-- Jerarquia organizativa en `Perfil`: vendedor -> jefe de ventas -> gerente -> director comercial.
-- Separacion de settings por entorno (`intranet/settings/`).
-
 ## Modelo de datos
 
-Entidades principales:
+Modelos principales (`comisiones/models.py`):
 
-- `Venta`: informacion comercial por operacion (matricula, IDV, cliente, tipo de venta, etc.).
-- `Comision`: importe y estado de comision asociados a una `Venta`.
-- `Incidencia`: reporte funcional por usuario, con relacion N:M contra `Venta` (o general).
-- `Perfil`: extension del usuario con sede, foto y cadena jerarquica.
+- `Venta`
+  - Relacionada con `auth.User` (`usuario`)
+  - Campos de venta (matricula, idv, tipo, cliente, fecha, etc.)
+- `Comision`
+  - FK a `Venta`
+  - Campos economicos + estado
+- `Incidencia`
+  - `reportado_por` (User)
+  - N:M con `Venta` (`ventas`)
+  - Permite incidencias generales (`es_general=True`)
+- `Perfil`
+  - OneToOne con `auth.User`
+  - `dni`, `telefono`, `area`, `concesionario`, `sede`
+  - Jerarquia: `jefe_ventas`, `gerente`, `director_comercial`
+  - `foto_perfil`
+- `Boletin`
+  - titulo, fecha, marca, tipo, archivo, activo
+- `LecturaBoletin`
+  - FK a `Boletin` + FK a `User`
+  - marca de lectura (unique por boletin/usuario)
 
-Relaciones relevantes:
+## Autenticacion (login por DNI)
 
-- `Venta.usuario` -> `auth.User`.
-- `Comision.venta` -> `Venta`.
-- `Incidencia.reportado_por` -> `auth.User`.
-- `Incidencia.ventas` -> `Venta` (ManyToMany).
-- `Perfil.user` -> `auth.User` (OneToOne).
+El login se hace por **DNI** (no por username):
+
+- Formulario: `comisiones/forms.py` -> `LoginPorDNIForm`
+- Backend de autenticacion: `comisiones/auth_backends.py` -> `DNIAutenticacionBackend`
+- Configuracion en settings: `AUTHENTICATION_BACKENDS` en `intranet/settings/base.py`
+- Vistas de login: `intranet/urls.py` usando `LoginView(authentication_form=LoginPorDNIForm)`
+
+Importante:
+
+- El usuario debe tener `Perfil.dni` informado para poder iniciar sesion.
 
 ## Puesta en marcha local
 
-### Opcion rapida en Windows (script .bat)
-
-Si estas en Windows, puedes preparar y arrancar el proyecto con:
+### Opcion rapida (Windows)
 
 ```powershell
 .\iniciar_intranet.bat
 ```
 
-El script `iniciar_intranet.bat` hace este flujo automaticamente:
+Hace: entorno virtual, dependencias, migraciones, seed opcional, arranque del servidor.
 
-1. Verifica `python` en `PATH`.
-2. Usa `venv` (o `.venv` si existe); si no existe ninguno, crea `venv`.
-3. Activa el entorno virtual.
-4. Instala dependencias de `requirements.txt`.
-5. Aplica migraciones.
-6. Ejecuta `python manage.py seed` si la BD esta vacia.
-7. Pregunta si quieres crear superusuario.
-8. Abre `http://127.0.0.1:8000/` y ejecuta el servidor.
+### Opcion manual
 
-Para forzar seed en cualquier momento:
+1. Crear y activar entorno virtual
 
 ```powershell
-set SEED=1
-.\iniciar_intranet.bat
+python -m venv venv
+venv\Scripts\Activate.ps1
 ```
 
-### Opcion manual (Windows/Linux/macOS)
-
-#### 1) Clonar y entrar al proyecto
-
-```bash
-git clone <url-del-repositorio>
-cd intranet
-```
-
-#### 2) Crear entorno virtual
-
-Windows (PowerShell):
+2. Instalar dependencias
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-Linux/macOS:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-#### 3) Instalar dependencias
-
-```bash
 pip install -r requirements.txt
 ```
 
-#### 4) Aplicar migraciones
+3. Migrar base de datos
 
-```bash
+```powershell
 python manage.py migrate
 ```
 
-#### 5) Crear usuario administrador
+4. Ejecutar servidor
 
-```bash
-python manage.py createsuperuser
-```
-
-#### 6) Ejecutar servidor de desarrollo
-
-```bash
+```powershell
 python manage.py runserver
 ```
 
-Acceso local:
+Accesos:
 
-- Aplicacion: `http://127.0.0.1:8000/`
-- Admin Django: `http://127.0.0.1:8000/admin/`
+- App: `http://127.0.0.1:8000/`
+- Admin: `http://127.0.0.1:8000/admin/`
 
-## Datos demo reproducibles (seed)
+## Datos demo (seed)
 
-Este proyecto incluye un management command para poblar datos de ejemplo sin depender de subir SQLite al repositorio.
+Comando:
 
-Comando base:
-
-```bash
+```powershell
 python manage.py seed
 ```
 
-Opciones disponibles:
+Opciones:
 
-- `--n-ventas`: numero de ventas demo a crear (default: `30`).
-- `--n-incidencias`: numero de incidencias demo a crear (default: `10`).
-- `--reset`: borra ventas/comisiones/incidencias y regenera datos demo.
+- `--n-ventas` (default 30)
+- `--n-incidencias` (default 10)
+- `--reset` (borra y regenera datos demo)
 
 Ejemplos:
 
-```bash
-python manage.py seed --n-ventas 50 --n-incidencias 20
+```powershell
 python manage.py seed --reset
+python manage.py seed --n-ventas 50 --n-incidencias 20
 ```
 
-Comportamiento de idempotencia:
+El seed crea:
 
-- Si ya existen ventas o incidencias, `seed` no duplica datos y se omite.
-- Si quieres regenerar desde cero, usa `--reset`.
+- Grupos: `Vendedor`, `Jefe de ventas`, `Gerente`, `Director Comercial`
+- Usuarios demo + perfiles con DNI, telefono, area, concesionario, sede y jerarquia
+- Ventas + comisiones
+- Incidencias
+- Boletines + lecturas demo
 
-Datos demo creados:
+Credenciales demo:
 
-- Grupos de permisos (`Vendedor`, `Jefe de ventas`, `Gerente`, `Director Comercial`).
-- Usuarios demo con perfiles y jerarquia organizativa.
-- Ventas y comisiones con fechas recientes e importes plausibles.
-- Incidencias asociadas a ventas (o generales).
-
-Credenciales demo por defecto:
-
-- Usuario: `vendedor_1_demo`
+- DNI vendedor 1: `70000005E`
 - Password: `Demo12345!`
 
-Notas de repositorio:
+(Tambien existen `70000006F`, `70000007G`, etc. segun usuarios seed).
 
-- `db.sqlite3` y `*.sqlite3` estan excluidos en `.gitignore`.
-- Cada clon puede reconstruir su BD local con migraciones + seed.
+## Configuracion de email
 
-## Configuracion y entornos
+En local se usa `intranet/settings/local.py`.
 
-Configuracion activa:
+Configuracion actual:
 
-1. `manage.py` usa `DJANGO_SETTINGS_MODULE=intranet.settings`.
-1. `intranet/settings/__init__.py` importa `local.py` por defecto.
+- SMTP host: `mail.grupomarcos.com`
+- Puerto: `25`
+- Sin TLS/SSL
+- From por defecto: `noresponder@grupomarcos.com`
+- Destino incidencias: `INCIDENCIAS_EMAIL_TO` (actualmente correo de pruebas)
 
-Archivos de settings:
+La funcion de envio se ejecuta al registrar incidencia:
 
-- `intranet/settings/base.py`: configuracion comun.
-- `intranet/settings/local.py`: DEBUG activo y hosts locales.
-- `intranet/settings/production.py`: plantilla comentada (pendiente de completar).
-
-Recomendaciones para produccion:
-
-- Mover `SECRET_KEY` a variable de entorno.
-- Desactivar `DEBUG`.
-- Definir `ALLOWED_HOSTS` reales.
-- Activar cookies seguras y HTTPS.
-
-## Flujos por rol
-
-El sistema usa grupos de Django para comportamiento por rol:
-
-- `Vendedor` y `Jefe de ventas`:
-  - Redireccion tras login a perfil o ventas.
-  - Acceso a `mis_ventas`, `mis_incidencias`, `registrar_incidencia`, `mi_perfil`.
-- `Gerente` y `Director Comercial`:
-  - Flujo orientado a vistas de gerencia.
-  - Existe implementacion de vistas y plantillas, con una limitacion actual en routing (ver abajo).
+- `comisiones/views.py` -> `_enviar_correo_nueva_incidencia`
 
 ## Rutas principales
 
-- `/` -> login.
-- `/accounts/login/` -> login.
-- `/accounts/logout/` -> logout.
-- `/redirigir/` -> redireccion segun rol.
-- `/comisiones/mis_ventas/` -> ventas del usuario.
-- `/comisiones/mis_incidencias/` -> incidencias del usuario.
-- `/comisiones/registrar_incidencia/` -> alta de incidencia.
-- `/comisiones/mis_incidencias/<id>/` -> detalle incidencia personal.
-- `/comisiones/mi_perfil/` -> perfil del usuario.
-- `/comisiones/incidencias/` -> incidencias para gerencia.
+- `/` -> login
+- `/accounts/login/` -> login
+- `/accounts/logout/` -> logout
+- `/redirigir/` -> redireccion por rol
+- `/comisiones/` -> comisiones gerencia
+- `/comisiones/mis_ventas/`
+- `/comisiones/mis_incidencias/`
+- `/comisiones/mis_incidencias/<id>/`
+- `/comisiones/registrar_incidencia/`
+- `/comisiones/mi_perfil/`
+- `/comisiones/boletin/`
+- `/comisiones/mis_comunicaciones/`
+- `/comisiones/normativas/`
+- `/comisiones/manuales/`
+- `/comisiones/avisos_sin_leer/`
+- `/comisiones/vehiculos_en_uso/`
+- `/comisiones/incidencias/` (gerencia)
 
-## Calidad, estado actual y limitaciones
+## Estado actual y limitaciones
 
-Verificaciones ejecutadas:
+- `python manage.py check` pasa sin errores.
+- `comisiones/tests.py` existe pero no hay suite de tests implementada.
+- `intranet/settings/production.py` esta como plantilla (pendiente de completar para despliegue real).
+- Para login por DNI, si un perfil no tiene DNI informado, ese usuario no podra autenticarse.
 
-- `python manage.py check` -> sin incidencias del sistema.
-- `python manage.py test` -> 0 tests detectados.
-
-Limitaciones detectadas en el estado actual:
-
-1. Ruta de comisiones de gerencia no expuesta:
-   - `comisiones_gerencia` existe en vistas/plantillas, pero su `path(...)` esta comentado en `comisiones/urls.py`.
-   - Se referencia ese nombre de ruta desde plantillas y redireccion por rol.
-2. Vistas de gerencia:
-   - `incidencias_gerencia` usa datos reales del modelo `Incidencia` en base de datos.
-3. Datos de perfil parcialmente hardcodeados:
-   - `mi_perfil` muestra campos de ejemplo (DNI, telefono, organigrama) no persistidos en base de datos.
-4. Cobertura automatizada:
-   - No hay tests implementados actualmente.
-5. Seguridad para entorno productivo:
-   - `SECRET_KEY` y `DEBUG` estan definidos para desarrollo en settings base/local.
-
-## Contribucion
-
-Normas y flujo de trabajo en:
-
-- `./.github/CONTRIBUTING.md`
-- `./.github/pull_request_template.md`
-
-Resumen:
-
-- Trabajar siempre en ramas (`feature/*`, `fix/*`, `refactor/*`, `hotfix/*`).
-- Abrir Pull Request hacia `main`.
-- Revisar manualmente cualquier cambio asistido por IA antes de merge.
-
-## Licencia
-
-Distribuido bajo licencia MIT. Ver `LICENSE`.
