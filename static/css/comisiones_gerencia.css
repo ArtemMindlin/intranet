@@ -207,3 +207,70 @@
         min-width: 980px;
     }
 }
+
+@media (max-width: 1024px) {
+    .manager-filters {
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    .manager-filters-grid {
+        gap: 8px;
+    }
+
+    .manager-filters label {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .manager-filters input,
+    .manager-filters select,
+    .manager-filters button {
+        height: 34px;
+        font-size: 14px;
+    }
+
+    .manager-tools {
+        margin-bottom: 8px;
+        gap: 8px;
+    }
+
+    .actions-inline {
+        width: 100%;
+        gap: 8px;
+    }
+
+    .actions-inline .btn {
+        width: 100%;
+    }
+
+    .pending-box {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .manager-table-wrap {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    .manager-filters {
+        padding: 6px;
+    }
+
+    .manager-filters-grid {
+        gap: 6px;
+    }
+
+    .pending-box {
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .pending-box strong {
+        min-width: 24px;
+        height: 24px;
+        font-size: 16px;
+    }
+}

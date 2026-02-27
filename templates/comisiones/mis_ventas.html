@@ -80,6 +80,7 @@
             >
                 <span class="filters-toggle__icon" aria-hidden="true">&#9776;</span>
                 <span class="filters-toggle__label">Filtros</span>
+                <span class="filters-toggle__count" data-filters-count {% if not active_filters %}hidden{% endif %}>{{ active_filters|length }}</span>
             </button>
             <div class="content-topbar__kpi">
                 <article class="kpi-card">
@@ -89,6 +90,21 @@
                     </div>
                     <div class="kpi-card__value" aria-label="Total ventas del periodo">
                         {{ total_ventas_periodo }}
+                    </div>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-card__meta">
+                        <h2 class="kpi-card__title">Comparaci&oacute;n mes anterior</h2>
+                        <p class="kpi-card__subtitle">Mes anterior: {{ mes_anterior_label }}</p>
+                        <p class="kpi-card__comparison">
+                            {{ ventas_mes_anterior }} ventas
+                        </p>
+                    </div>
+                    <div class="kpi-card__value kpi-card__value--{{ delta_mes_anterior_estado }}" aria-label="Variacion frente al mes anterior">
+                        <span class="kpi-card__trend-arrow" aria-hidden="true">
+                            {% if delta_mes_anterior_estado == 'positive' %}&#9650;{% elif delta_mes_anterior_estado == 'negative' %}&#9660;{% else %}&#8213;{% endif %}
+                        </span>
+                        <span>{{ delta_mes_anterior_str }}</span>
                     </div>
                 </article>
             </div>
@@ -116,6 +132,17 @@
 
         <section class="content main-layout">
             <aside id="filtersPanel" class="filters-panel-shell" tabindex="-1">
+                <div class="filters-sheet-header">
+                    <h3 class="filters-sheet-title">Filtros</h3>
+                    <div class="filters-sheet-header-actions">
+                        {% if active_filters %}
+                        <button type="button" class="clear-filters-btn filters-sheet-clear" data-clear-all="true" aria-label="Limpiar filtros">
+                            Limpiar
+                        </button>
+                        {% endif %}
+                        <button type="button" class="filters-sheet-close" data-filters-close aria-label="Cerrar filtros">&times;</button>
+                    </div>
+                </div>
                 <form class="filters filters-panel" method="get" id="mis-ventas-filtros-form">
                     <input type="hidden" name="sort" value="{{ sort_by }}">
                     <input type="hidden" name="dir" value="{{ sort_dir }}">
@@ -229,7 +256,8 @@
                         </div>
                     </div>
                     <div class="field field-submit">
-                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtro</button>
+                        <button type="button" class="btn btn-secondary filters-sheet-cancel" data-filters-close>Cerrar</button>
+                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtros</button>
                     </div>
                 </form>
             </aside>
@@ -272,6 +300,14 @@
                     <table class="mis-ventas-results">
                         <thead>
                             <tr>
+                                <th class="select-col-header">
+                                    <input
+                                        type="checkbox"
+                                        id="select-all-sales"
+                                        class="sales-select-all"
+                                        aria-label="Seleccionar todas las ventas filtradas"
+                                    >
+                                </th>
                                 <th
                                     class="is-primary-col th-sortable{% if sort_by == 'matricula' %} is-sorted{% endif %}"
                                     aria-sort="{% if sort_by == 'matricula' %}{% if sort_dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
@@ -397,6 +433,15 @@
                         <tbody>
                             {% for venta in ventas %}
                             <tr data-result-row {% if forloop.counter > initial_visible_rows %}hidden{% endif %}>
+                                <td class="select-col-cell center">
+                                    <input
+                                        type="checkbox"
+                                        class="sale-select"
+                                        data-select-venta
+                                        value="{{ venta.id }}"
+                                        aria-label="Seleccionar venta {{ venta.matricula }} (IDV {{ venta.idv }})"
+                                    >
+                                </td>
                                 <td class="bold is-primary-col">{{ venta.matricula|default:"--" }}</td>
                                 <td class="center">{% if venta.fecha_venta %}{{ venta.fecha_venta|date:"d/m/Y" }}{% else %}--{% endif %}</td>
                                 <td class="center">{{ venta.idv|default_if_none:"--" }}</td>
@@ -410,20 +455,47 @@
                         </tbody>
                     </table>
                 </div>
-                {% if total_resultados > initial_visible_rows %}
-                <div class="results-footer">
-                    <button
-                        type="button"
-                        id="load-more-results"
-                        class="load-more-btn"
-                        data-page-size="{{ initial_visible_rows }}"
-                        aria-label="Cargar mas resultados"
-                    >
-                        <span class="load-more-btn__text">Cargar m&aacute;s</span>
-                        <span class="load-more-btn__spinner" aria-hidden="true"></span>
-                    </button>
+                <div class="results-actions-row" data-export-url="{% url 'exportar_mis_ventas' %}">
+                    <div class="results-actions-left">
+                        <div class="export-desktop-group">
+                            <button type="button" class="export-btn export-btn-excel" id="export-excel-btn">Exportar Excel</button>
+                            <button type="button" class="export-btn export-btn-csv" id="export-csv-btn">Exportar CSV</button>
+                        </div>
+                        <div class="export-mobile-group">
+                            <div class="export-menu-wrap export-menu-wrap-mobile">
+                                <button
+                                    type="button"
+                                    class="export-btn export-btn-main"
+                                    id="export-menu-toggle"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                    aria-controls="export-options-menu-mobile"
+                                >
+                                    Exportar
+                                    <span class="export-btn-caret" aria-hidden="true">&#9662;</span>
+                                </button>
+                                <div class="export-options-menu" id="export-options-menu-mobile" role="menu" hidden>
+                                    <button type="button" class="export-option-btn" data-export-format="excel" role="menuitem">Excel</button>
+                                    <button type="button" class="export-option-btn" data-export-format="csv" role="menuitem">CSV</button>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="results-export-count" id="selected-sales-count">0 seleccionadas</span>
+                    </div>
+                    <div class="results-actions-right">
+                        <button
+                            type="button"
+                            id="load-more-results"
+                            class="load-more-btn"
+                            data-page-size="{{ initial_visible_rows }}"
+                            aria-label="Cargar mas resultados"
+                            {% if total_resultados <= initial_visible_rows %}hidden{% endif %}
+                        >
+                            <span class="load-more-btn__text">Cargar m&aacute;s</span>
+                            <span class="load-more-btn__spinner" aria-hidden="true"></span>
+                        </button>
+                    </div>
                 </div>
-                {% endif %}
                 {% else %}
                 <div class="empty-state" role="status" aria-live="polite">
                     <h3 class="empty-state-title">No hay resultados</h3>

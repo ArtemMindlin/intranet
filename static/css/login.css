@@ -29,25 +29,25 @@ body.login-page::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.34);
+    background: rgba(0, 0, 0, 0.46);
     z-index: 0;
 }
 
 .page {
     position: relative;
     z-index: 1;
-    width: min(98%, 1840px);
+    width: min(100%, 1840px);
     max-width: 1840px;
     margin: 0 auto;
     padding: 16px;
 }
 
 .login-content {
-    min-height: calc(100vh - 32px);
+    min-height: calc(100dvh - 32px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: 0 12px;
 }
 
 .card {
@@ -58,6 +58,7 @@ body.login-page::before {
 .login-box {
     width: 100%;
     max-width: 420px;
+    min-width: 360px;
     padding: 28px;
     border-radius: 12px;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
@@ -142,15 +143,43 @@ button:hover {
     }
 
     .login-content {
-        min-height: calc(100vh - 24px);
+        min-height: calc(100dvh - 24px);
+        padding: 0 4px;
     }
 
     .login-box {
         max-width: 100%;
+        min-width: 0;
         padding: 24px;
     }
 
     .login-box h2 {
         font-size: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page {
+        padding: 10px;
+    }
+
+    .login-content {
+        min-height: calc(100dvh - 20px);
+        padding: 0;
+    }
+
+    .login-box {
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .login-box h2 {
+        margin-bottom: 14px;
+        font-size: 24px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        font-size: 15px;
     }
 }

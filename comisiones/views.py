@@ -1,5 +1,6 @@
 ﻿from calendar import monthrange
 from datetime import date
+from io import BytesIO
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,12 @@ from django.db.models import Q, Sum, CharField
 from django.db.models.functions import Cast
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+
+import csv
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from django.utils import timezone
 
 from .forms import MiPerfilEditableForm
 from .models import Boletin, Comision, Incidencia, LecturaBoletin, Perfil, Venta
@@ -53,10 +60,63 @@ def _rol_usuario(user):
     return "Usuario"
 
 
-def _nombre_usuario(user):
+def _nombre_usuario(user, default="--"):
     if not user:
-        return "--"
+        return default
     return user.get_full_name().strip() or user.username
+
+
+def _obtener_perfil(user):
+    return Perfil.objects.get_or_create(user=user)[0]
+
+
+def _resolver_orden_generico(sort_by_param, sort_dir_param, default_sort, campos_validos):
+    sort_by = (sort_by_param or default_sort).strip().lower()
+    sort_dir = (sort_dir_param or "desc").strip().lower()
+    if sort_by not in campos_validos:
+        sort_by = default_sort
+    if sort_dir not in {"asc", "desc"}:
+        sort_dir = "desc"
+    return sort_by, sort_dir
+
+
+def _siguiente_direccion_por_campo(campos_ordenables, sort_by, sort_dir):
+    return {
+        campo: ("desc" if sort_by == campo and sort_dir == "asc" else "asc")
+        for campo in campos_ordenables
+    }
+
+
+def _build_periodo_chip(fecha_desde, fecha_hasta, mes_base):
+    if not (fecha_desde or fecha_hasta):
+        return None
+    if fecha_desde == mes_base and fecha_hasta == mes_base:
+        return None
+    if fecha_desde and fecha_hasta:
+        label_periodo = (
+            f"{_format_year_month_label(fecha_desde)} - "
+            f"{_format_year_month_label(fecha_hasta)}"
+        )
+    else:
+        label_periodo = (
+            _format_year_month_label(fecha_desde)
+            if fecha_desde
+            else _format_year_month_label(fecha_hasta)
+        )
+    return {
+        "title": "Periodo",
+        "label": f"Periodo: {label_periodo}",
+        "fields": ["desde", "hasta"],
+    }
+
+
+def _parse_selected_ids(raw_ids):
+    selected_ids = []
+    for value in (raw_ids or "").split(","):
+        value = value.strip()
+        if value.isdigit():
+            selected_ids.append(int(value))
+    return list(dict.fromkeys(selected_ids))
 
 
 def _parse_iso_date(value):
@@ -181,6 +241,166 @@ def _unique_non_empty(values):
     return result
 
 
+def _ventas_periodo_qs_usuario(user, fecha_desde_date, fecha_hasta_date):
+    qs = Venta.objects.filter(usuario=user)
+    if fecha_desde_date:
+        qs = qs.filter(fecha_venta__gte=fecha_desde_date)
+    if fecha_hasta_date:
+        qs = qs.filter(fecha_venta__lte=fecha_hasta_date)
+    return qs
+
+
+def _extraer_filtros_ventas_desde_request(request):
+    return {
+        "matricula": request.GET.get("matricula", "").strip(),
+        "idv": request.GET.get("idv", "").strip(),
+        "tipo_venta": request.GET.get("tipo_venta", "").strip(),
+        "dni": request.GET.get("dni", "").strip(),
+        "tipo_cliente": request.GET.get("tipo_cliente", "").strip(),
+        "nombre_cliente": request.GET.get("nombre_cliente", "").strip(),
+    }
+
+
+def _aplicar_filtros_ventas_qs(ventas_qs, filtros):
+    if filtros["matricula"]:
+        ventas_qs = ventas_qs.filter(matricula__icontains=filtros["matricula"])
+
+    if filtros["idv"]:
+        if filtros["idv"].isdigit():
+            ventas_qs = ventas_qs.filter(idv=int(filtros["idv"]))
+        else:
+            ventas_qs = ventas_qs.none()
+
+    if filtros["tipo_venta"]:
+        ventas_qs = ventas_qs.filter(tipo_venta__iexact=filtros["tipo_venta"])
+
+    if filtros["dni"]:
+        ventas_qs = ventas_qs.filter(dni__icontains=filtros["dni"])
+
+    if filtros["tipo_cliente"]:
+        ventas_qs = ventas_qs.filter(tipo_cliente__iexact=filtros["tipo_cliente"])
+
+    if filtros["nombre_cliente"]:
+        ventas_qs = ventas_qs.filter(
+            nombre_cliente__icontains=filtros["nombre_cliente"]
+        )
+    return ventas_qs
+
+
+def _resolver_orden_ventas(sort_by_param, sort_dir_param):
+    campos_ordenables = {
+        "matricula": "matricula",
+        "fecha": "fecha_venta",
+        "idv": "idv",
+        "tipo_venta": "tipo_venta",
+        "ud_financiadas": "ud_financiadas",
+        "dni": "dni",
+        "tipo_cliente": "tipo_cliente",
+        "nombre_cliente": "nombre_cliente",
+    }
+    sort_by, sort_dir = _resolver_orden_generico(
+        sort_by_param=sort_by_param,
+        sort_dir_param=sort_dir_param,
+        default_sort="fecha",
+        campos_validos=campos_ordenables,
+    )
+    return sort_by, sort_dir, campos_ordenables
+
+
+def _aplicar_orden_ventas_qs(ventas_qs, sort_by, sort_dir, campos_ordenables):
+    campo_orden = campos_ordenables[sort_by]
+    prefijo = "" if sort_dir == "asc" else "-"
+    orden = [f"{prefijo}{campo_orden}"]
+    if campo_orden != "id":
+        orden.append("id" if sort_dir == "asc" else "-id")
+    return ventas_qs.order_by(*orden)
+
+
+def _respuesta_export_ventas_csv(ventas_qs):
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    timestamp = timezone.localtime().strftime("%Y%m%d_%H%M%S")
+    response["Content-Disposition"] = (
+        f'attachment; filename="mis_ventas_{timestamp}.csv"'
+    )
+    response.write("\ufeff")
+
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow(
+        [
+            "Matricula",
+            "Fecha",
+            "IDV",
+            "Tipo venta",
+            "UD financiadas",
+            "DNI",
+            "Tipo cliente",
+            "Nombre cliente",
+        ]
+    )
+    for venta in ventas_qs:
+        writer.writerow(
+            [
+                venta.matricula or "--",
+                venta.fecha_venta.strftime("%d/%m/%Y") if venta.fecha_venta else "--",
+                venta.idv if venta.idv is not None else "--",
+                venta.get_tipo_venta_display() or "--",
+                venta.ud_financiadas if venta.ud_financiadas is not None else "--",
+                venta.dni or "--",
+                venta.get_tipo_cliente_display() or "--",
+                venta.nombre_cliente or "--",
+            ]
+        )
+    return response
+
+
+def _respuesta_export_ventas_excel(ventas_qs):
+    timestamp = timezone.localtime().strftime("%Y%m%d_%H%M%S")
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="mis_ventas_{timestamp}.xlsx"'
+    )
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Mis Ventas"
+
+    headers = [
+        "Matricula",
+        "Fecha",
+        "IDV",
+        "Tipo venta",
+        "UD financiadas",
+        "DNI",
+        "Tipo cliente",
+        "Nombre cliente",
+    ]
+    sheet.append(headers)
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+
+    for venta in ventas_qs:
+        sheet.append(
+            [
+                venta.matricula or "--",
+                venta.fecha_venta.strftime("%d/%m/%Y") if venta.fecha_venta else "--",
+                venta.idv if venta.idv is not None else "--",
+                venta.get_tipo_venta_display() or "--",
+                venta.ud_financiadas if venta.ud_financiadas is not None else "--",
+                venta.dni or "--",
+                venta.get_tipo_cliente_display() or "--",
+                venta.nombre_cliente or "--",
+            ]
+        )
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+    response.write(output.getvalue())
+    return response
+
+
 def _registrar_lectura_boletin(boletin, usuario):
     LecturaBoletin.objects.update_or_create(
         boletin=boletin,
@@ -255,14 +475,10 @@ def mis_ventas(request):
         request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
 
-    # Se obtienen las ventas del usuario en el rango de fechas seleccionado, aplicando filtros y ordenamientos según los parámetros de la consulta.
-    ventas_periodo_qs = Venta.objects.filter(usuario=request.user)
-    if fecha_desde_date:
-        ventas_periodo_qs = ventas_periodo_qs.filter(fecha_venta__gte=fecha_desde_date)
-    if fecha_hasta_date:
-        ventas_periodo_qs = ventas_periodo_qs.filter(fecha_venta__lte=fecha_hasta_date)
-    ventas_periodo_qs = ventas_periodo_qs.order_by("-fecha_venta", "-id")
-    # ventas_periodo = list(ventas_periodo_qs)
+    # Se obtienen las ventas del usuario en el rango de fechas seleccionado.
+    ventas_periodo_qs = _ventas_periodo_qs_usuario(
+        request.user, fecha_desde_date, fecha_hasta_date
+    ).order_by("-fecha_venta", "-id")
 
     # Se generan las opciones únicas para los filtros de búsqueda en base a las ventas obtenidas, asegurando que no haya valores vacíos ni duplicados.
 
@@ -325,73 +541,50 @@ def mis_ventas(request):
         for code in tipo_cliente_codes
     ]
 
-    filtros = {
-        "matricula": request.GET.get("matricula", "").strip(),
-        "idv": request.GET.get("idv", "").strip(),
-        "tipo_venta": request.GET.get("tipo_venta", "").strip(),
-        "dni": request.GET.get("dni", "").strip(),
-        "tipo_cliente": request.GET.get("tipo_cliente", "").strip(),
-        "nombre_cliente": request.GET.get("nombre_cliente", "").strip(),
-    }
+    filtros = _extraer_filtros_ventas_desde_request(request)
 
-    ventas_qs = ventas_periodo_qs
+    ventas_qs = _aplicar_filtros_ventas_qs(ventas_periodo_qs, filtros)
+    sort_by, sort_dir, campos_ordenables = _resolver_orden_ventas(
+        request.GET.get("sort", "fecha"),
+        request.GET.get("dir", "desc"),
+    )
+    ventas_qs = _aplicar_orden_ventas_qs(ventas_qs, sort_by, sort_dir, campos_ordenables)
 
-    if filtros["matricula"]:
-        ventas_qs = ventas_qs.filter(matricula__icontains=filtros["matricula"])
-
-    if filtros["idv"]:
-        if filtros["idv"].isdigit():
-            ventas_qs = ventas_qs.filter(idv=int(filtros["idv"]))
-        else:
-            ventas_qs = ventas_qs.none()
-
-    if filtros["tipo_venta"]:
-        ventas_qs = ventas_qs.filter(tipo_venta__iexact=filtros["tipo_venta"])
-
-    if filtros["dni"]:
-        ventas_qs = ventas_qs.filter(dni__icontains=filtros["dni"])
-
-    if filtros["tipo_cliente"]:
-        ventas_qs = ventas_qs.filter(tipo_cliente__iexact=filtros["tipo_cliente"])
-
-    if filtros["nombre_cliente"]:
-        ventas_qs = ventas_qs.filter(
-            nombre_cliente__icontains=filtros["nombre_cliente"]
-        )
-
-    sort_by = request.GET.get("sort", "fecha").strip().lower()
-    sort_dir = request.GET.get("dir", "desc").strip().lower()
-    campos_ordenables = {
-        "matricula": "matricula",
-        "fecha": "fecha_venta",
-        "idv": "idv",
-        "tipo_venta": "tipo_venta",
-        "ud_financiadas": "ud_financiadas",
-        "dni": "dni",
-        "tipo_cliente": "tipo_cliente",
-        "nombre_cliente": "nombre_cliente",
-    }
-    if sort_by not in campos_ordenables:
-        sort_by = "fecha"
-    if sort_dir not in {"asc", "desc"}:
-        sort_dir = "desc"
-
-    campo_orden = campos_ordenables[sort_by]
-    prefijo = "" if sort_dir == "asc" else "-"
-    orden = [f"{prefijo}{campo_orden}"]
-    if campo_orden != "id":
-        orden.append("id" if sort_dir == "asc" else "-id")
-    ventas_qs = ventas_qs.order_by(*orden)
-
-    siguiente_direccion = {}
-    for campo in campos_ordenables:
-        if sort_by == campo and sort_dir == "asc":
-            siguiente_direccion[campo] = "desc"
-        else:
-            siguiente_direccion[campo] = "asc"
+    siguiente_direccion = _siguiente_direccion_por_campo(
+        campos_ordenables, sort_by, sort_dir
+    )
 
     ventas = list(ventas_qs)
     total_resultados = len(ventas)
+    ym_referencia = _parse_year_month(fecha_hasta) or (date.today().year, date.today().month)
+    if ym_referencia[1] == 1:
+        ym_mes_anterior = (ym_referencia[0] - 1, 12)
+    else:
+        ym_mes_anterior = (ym_referencia[0], ym_referencia[1] - 1)
+    mes_anterior_desde, mes_anterior_hasta = _year_month_bounds(ym_mes_anterior)
+    ventas_mes_anterior = Venta.objects.filter(
+        usuario=request.user,
+        fecha_venta__gte=mes_anterior_desde,
+        fecha_venta__lte=mes_anterior_hasta,
+    ).count()
+    delta_mes_anterior = total_resultados - ventas_mes_anterior
+    if ventas_mes_anterior > 0:
+        delta_mes_anterior_pct = (delta_mes_anterior / ventas_mes_anterior) * 100
+    elif total_resultados == 0:
+        delta_mes_anterior_pct = 0.0
+    else:
+        delta_mes_anterior_pct = 100.0
+    delta_mes_anterior_str = f"{delta_mes_anterior_pct:+.1f}%".replace(".", ",")
+    if delta_mes_anterior > 0:
+        delta_mes_anterior_estado = "positive"
+        delta_mes_anterior_arrow = "up"
+    elif delta_mes_anterior < 0:
+        delta_mes_anterior_estado = "negative"
+        delta_mes_anterior_arrow = "down"
+    else:
+        delta_mes_anterior_estado = "neutral"
+        delta_mes_anterior_arrow = "flat"
+    mes_anterior_label = _format_year_month_label(_format_year_month(ym_mes_anterior))
     initial_visible_rows = 25
     initial_visible_count = min(total_resultados, initial_visible_rows)
     total_comision_aprobada = Comision.objects.filter(
@@ -410,27 +603,9 @@ def mis_ventas(request):
 
     current_month = _format_year_month((date.today().year, date.today().month))
     active_filters = []
-    if (fecha_desde or fecha_hasta) and (
-        fecha_desde != current_month or fecha_hasta != current_month
-    ):
-        if fecha_desde and fecha_hasta:
-            period_value = (
-                f"{_format_year_month_label(fecha_desde)} - "
-                f"{_format_year_month_label(fecha_hasta)}"
-            )
-        else:
-            period_value = (
-                _format_year_month_label(fecha_desde)
-                if fecha_desde
-                else _format_year_month_label(fecha_hasta)
-            )
-        active_filters.append(
-            {
-                "title": "Periodo",
-                "label": f"Periodo: {period_value}",
-                "fields": ["desde", "hasta"],
-            }
-        )
+    periodo_chip = _build_periodo_chip(fecha_desde, fecha_hasta, current_month)
+    if periodo_chip:
+        active_filters.append(periodo_chip)
 
     filters_meta = (
         ("matricula", "Matrícula"),
@@ -448,7 +623,7 @@ def mis_ventas(request):
             )
 
     # Garantiza perfil para usuarios antiguos que se crearon antes de esta lógica.
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
 
     # Contexto que se pasará a la plantilla para renderizar la información de las ventas y comisiones del usuario.
     context = {
@@ -457,6 +632,11 @@ def mis_ventas(request):
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
         "total_ventas_periodo": total_resultados,
+        "ventas_mes_anterior": ventas_mes_anterior,
+        "mes_anterior_label": mes_anterior_label,
+        "delta_mes_anterior_str": delta_mes_anterior_str,
+        "delta_mes_anterior_estado": delta_mes_anterior_estado,
+        "delta_mes_anterior_arrow": delta_mes_anterior_arrow,
         "comision_aprobada_str": comision_aprobada,
         "comision_aprobada_disponible": comision_aprobada_disponible,
         "ventas": ventas,
@@ -480,12 +660,45 @@ def mis_ventas(request):
 
 
 @login_required
+def exportar_mis_ventas(request):
+    formato = (request.GET.get("formato", "csv") or "csv").strip().lower()
+    if formato not in {"csv", "excel"}:
+        formato = "csv"
+
+    fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
+        request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
+    )
+    filtros = _extraer_filtros_ventas_desde_request(request)
+    ventas_qs = _ventas_periodo_qs_usuario(request.user, fecha_desde_date, fecha_hasta_date)
+    ventas_qs = _aplicar_filtros_ventas_qs(ventas_qs, filtros)
+    sort_by, sort_dir, campos_ordenables = _resolver_orden_ventas(
+        request.GET.get("sort", "fecha"),
+        request.GET.get("dir", "desc"),
+    )
+    ventas_qs = _aplicar_orden_ventas_qs(ventas_qs, sort_by, sort_dir, campos_ordenables)
+
+    selected_ids = _parse_selected_ids(request.GET.get("selected_ids", ""))
+    if not selected_ids:
+        return HttpResponse(
+            "Debes seleccionar al menos una venta para exportar.",
+            status=400,
+            content_type="text/plain; charset=utf-8",
+        )
+    ventas_qs = ventas_qs.filter(id__in=selected_ids)
+
+    ventas_qs = list(ventas_qs)
+    if formato == "excel":
+        return _respuesta_export_ventas_excel(ventas_qs)
+    return _respuesta_export_ventas_csv(ventas_qs)
+
+
+@login_required
 def mis_incidencias(request):
 
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
         request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
     incidencias_periodo_qs = Incidencia.objects.filter(
         reportado_por=request.user
     ).prefetch_related("ventas")
@@ -543,13 +756,13 @@ def mis_incidencias(request):
     else:
         filtros["estado"] = ""
 
-    sort_by = request.GET.get("sort", "fecha").strip().lower()
-    sort_dir = request.GET.get("dir", "desc").strip().lower()
     campos_ordenables = {"matricula", "fecha", "tipo", "detalle", "estado"}
-    if sort_by not in campos_ordenables:
-        sort_by = "fecha"
-    if sort_dir not in {"asc", "desc"}:
-        sort_dir = "desc"
+    sort_by, sort_dir = _resolver_orden_generico(
+        sort_by_param=request.GET.get("sort", "fecha"),
+        sort_dir_param=request.GET.get("dir", "desc"),
+        default_sort="fecha",
+        campos_validos=campos_ordenables,
+    )
 
     reverse_order = sort_dir == "desc"
     if sort_by == "matricula":
@@ -572,12 +785,9 @@ def mis_incidencias(request):
             f"{prefijo}{campo_orden}", "id" if sort_dir == "asc" else "-id"
         )
 
-    siguiente_direccion = {}
-    for campo in campos_ordenables:
-        if sort_by == campo and sort_dir == "asc":
-            siguiente_direccion[campo] = "desc"
-        else:
-            siguiente_direccion[campo] = "asc"
+    siguiente_direccion = _siguiente_direccion_por_campo(
+        campos_ordenables, sort_by, sort_dir
+    )
 
     if isinstance(incidencias, list):
         total_resultados = len(incidencias)
@@ -586,29 +796,11 @@ def mis_incidencias(request):
     initial_visible_rows = 25
     initial_visible_count = min(total_resultados, initial_visible_rows)
 
-    current_month = f"{date.today().year:04d}-{date.today().month:02d}"
+    current_month = _format_year_month((date.today().year, date.today().month))
     active_filters = []
-    if (fecha_desde or fecha_hasta) and (
-        fecha_desde != current_month or fecha_hasta != current_month
-    ):
-        if fecha_desde and fecha_hasta:
-            label_periodo = (
-                f"{_format_year_month_label(fecha_desde)} - "
-                f"{_format_year_month_label(fecha_hasta)}"
-            )
-        else:
-            label_periodo = (
-                _format_year_month_label(fecha_desde)
-                if fecha_desde
-                else _format_year_month_label(fecha_hasta)
-            )
-        active_filters.append(
-            {
-                "title": "Periodo",
-                "label": f"Periodo: {label_periodo}",
-                "fields": ["desde", "hasta"],
-            }
-        )
+    periodo_chip = _build_periodo_chip(fecha_desde, fecha_hasta, current_month)
+    if periodo_chip:
+        active_filters.append(periodo_chip)
 
     if filtros["matricula"]:
         active_filters.append(
@@ -650,7 +842,7 @@ def mis_incidencias(request):
 
 @login_required
 def mis_comunicaciones(request):
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
     fecha_desde, fecha_hasta, fecha_desde_date, fecha_hasta_date = _resolve_month_range(
         request.GET.get("desde"), request.GET.get("hasta"), default_to_current=True
     )
@@ -684,13 +876,13 @@ def mis_comunicaciones(request):
         "tipo": request.GET.get("tipo", "").strip(),
     }
 
-    sort_by = request.GET.get("sort", "fecha").strip().lower()
-    sort_dir = request.GET.get("dir", "desc").strip().lower()
     campos_ordenables = {"boletin", "fecha", "marca", "tipo"}
-    if sort_by not in campos_ordenables:
-        sort_by = "fecha"
-    if sort_dir not in {"asc", "desc"}:
-        sort_dir = "desc"
+    sort_by, sort_dir = _resolver_orden_generico(
+        sort_by_param=request.GET.get("sort", "fecha"),
+        sort_dir_param=request.GET.get("dir", "desc"),
+        default_sort="fecha",
+        campos_validos=campos_ordenables,
+    )
 
     comunicaciones_qs = comunicaciones_periodo_qs
     if filtros["marca"]:
@@ -705,12 +897,9 @@ def mis_comunicaciones(request):
         "id" if sort_dir == "asc" else "-id",
     )
 
-    siguiente_direccion = {}
-    for campo in campos_ordenables:
-        if sort_by == campo and sort_dir == "asc":
-            siguiente_direccion[campo] = "desc"
-        else:
-            siguiente_direccion[campo] = "asc"
+    siguiente_direccion = _siguiente_direccion_por_campo(
+        campos_ordenables, sort_by, sort_dir
+    )
 
     comunicaciones = list(comunicaciones_qs)
     total_resultados = len(comunicaciones)
@@ -727,27 +916,9 @@ def mis_comunicaciones(request):
 
     current_month = _format_year_month((date.today().year, date.today().month))
     active_filters = []
-    if (fecha_desde or fecha_hasta) and (
-        fecha_desde != current_month or fecha_hasta != current_month
-    ):
-        if fecha_desde and fecha_hasta:
-            label_periodo = (
-                f"{_format_year_month_label(fecha_desde)} - "
-                f"{_format_year_month_label(fecha_hasta)}"
-            )
-        else:
-            label_periodo = (
-                _format_year_month_label(fecha_desde)
-                if fecha_desde
-                else _format_year_month_label(fecha_hasta)
-            )
-        active_filters.append(
-            {
-                "title": "Periodo",
-                "label": f"Periodo: {label_periodo}",
-                "fields": ["desde", "hasta"],
-            }
-        )
+    periodo_chip = _build_periodo_chip(fecha_desde, fecha_hasta, current_month)
+    if periodo_chip:
+        active_filters.append(periodo_chip)
     if filtros["marca"]:
         active_filters.append(
             {
@@ -786,7 +957,7 @@ def mis_comunicaciones(request):
 
 
 def _render_pagina_boletin_simple(request, template_name):
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
     context = {
         **_contexto_base_usuario(request, perfil),
         "ultima_conexion": request.user.last_login,
@@ -816,22 +987,18 @@ def vehiculos_en_uso(request):
 
 @login_required
 def registrar_incidencia(request):
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
     tipo_incidencia_opciones = [
         "Falta venta",
         "Sobra venta",
         "Falta financiacion",
     ]
-    ventas_usuario = list(
-        Venta.objects.filter(usuario=request.user).order_by("-fecha_venta", "-id")
+    ventas_usuario = Venta.objects.filter(usuario=request.user).order_by(
+        "-fecha_venta", "-id"
     )
-
-    matriculas_disponibles = []
-    matriculas_seen = set()
-    for venta in ventas_usuario:
-        if venta.matricula not in matriculas_seen:
-            matriculas_disponibles.append(venta.matricula)
-            matriculas_seen.add(venta.matricula)
+    matriculas_disponibles = _unique_non_empty(
+        ventas_usuario.values_list("matricula", flat=True)
+    )
     matriculas_opciones = ["GENERAL", *matriculas_disponibles]
 
     form_data = {
@@ -946,7 +1113,7 @@ def detalle_incidencia_personal(request, incidencia_id):
         if idx < len(incidencia_ids) - 1:
             siguiente_id = incidencia_ids[idx + 1]
 
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
     context = {
         **_contexto_base_usuario(request, perfil),
         "fecha_desde": fecha_desde,
@@ -963,7 +1130,7 @@ def detalle_incidencia_personal(request, incidencia_id):
 
 @login_required
 def mi_perfil(request):
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
     if not perfil.ha_visto_perfil_inicial:
         perfil.ha_visto_perfil_inicial = True
         perfil.save(update_fields=["ha_visto_perfil_inicial"])
@@ -990,7 +1157,7 @@ def mi_perfil(request):
             if perfil_updates:
                 perfil.save(update_fields=perfil_updates)
 
-            messages.success(request, "Guardado ✓")
+            messages.success(request, "Guardado ?")
             return redirect("mi_perfil")
 
         perfil_edit_mode = True
@@ -1043,7 +1210,7 @@ def comisiones_gerencia(request):
     instalacion = request.GET.get("instalacion", "2901: Nissan Orihuela")
     vendedor = request.GET.get("vendedor", "Todos")
 
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
 
     ventas_qs = Venta.objects.filter(
         fecha_venta__range=(fecha_desde_date, fecha_hasta_date)
@@ -1060,9 +1227,7 @@ def comisiones_gerencia(request):
 
     filas = []
     for venta in ventas_qs.order_by("-fecha_venta", "-id"):
-        nombre_empleado = (
-            venta.usuario.get_full_name().strip() if venta.usuario else ""
-        ) or (venta.usuario.username if venta.usuario else "Sin empleado")
+        nombre_empleado = _nombre_usuario(venta.usuario, default="Sin empleado")
         filas.append(
             {
                 "empleado_matricula": f"{nombre_empleado} / {venta.matricula}",
@@ -1102,7 +1267,7 @@ def incidencias_gerencia(request):
     instalacion = request.GET.get("instalacion", "2901: Nissan Orihuela")
     vendedor = request.GET.get("vendedor", "Todos")
 
-    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    perfil = _obtener_perfil(request.user)
 
     incidencias_qs = (
         Incidencia.objects.select_related("reportado_por")
@@ -1125,9 +1290,8 @@ def incidencias_gerencia(request):
 
     incidencias = []
     for incidencia in incidencias_qs:
-        usuario = incidencia.reportado_por
-        nombre_empleado = (usuario.get_full_name().strip() if usuario else "") or (
-            usuario.username if usuario else "Sin asignar"
+        nombre_empleado = _nombre_usuario(
+            incidencia.reportado_por, default="Sin asignar"
         )
         incidencias.append(
             {
@@ -1164,4 +1328,7 @@ def redirigir_por_rol(request):
     return redirect("comisiones_gerencia")
 
 
+
+
+
 

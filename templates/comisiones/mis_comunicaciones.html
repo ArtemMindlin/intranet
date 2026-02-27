@@ -74,11 +74,23 @@
             <button class="filters-toggle" type="button" aria-controls="filtersPanel" aria-expanded="true">
                 <span class="filters-toggle__icon" aria-hidden="true">&#9776;</span>
                 <span class="filters-toggle__label">Filtros</span>
+                <span class="filters-toggle__count" data-filters-count {% if not active_filters %}hidden{% endif %}>{{ active_filters|length }}</span>
             </button>
         </section>
 
         <section class="content main-layout">
             <aside id="filtersPanel" class="filters-panel-shell" tabindex="-1">
+                <div class="filters-sheet-header">
+                    <h3 class="filters-sheet-title">Filtros</h3>
+                    <div class="filters-sheet-header-actions">
+                        {% if active_filters %}
+                        <button type="button" class="clear-filters-btn filters-sheet-clear" data-clear-all="true" aria-label="Limpiar filtros">
+                            Limpiar
+                        </button>
+                        {% endif %}
+                        <button type="button" class="filters-sheet-close" data-filters-close aria-label="Cerrar filtros">&times;</button>
+                    </div>
+                </div>
                 <form method="get" class="filters filters-panel" id="mis-comunicaciones-filtros-form">
                     <input type="hidden" name="sort" value="{{ sort_by }}">
                     <input type="hidden" name="dir" value="{{ sort_dir }}">
@@ -132,7 +144,8 @@
                     </div>
 
                     <div class="field field-submit">
-                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtro</button>
+                        <button type="button" class="btn btn-secondary filters-sheet-cancel" data-filters-close>Cerrar</button>
+                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtros</button>
                     </div>
                 </form>
             </aside>
@@ -294,6 +307,42 @@
     <script src="{% static 'js/filter_accordion.js' %}"></script>
     <script src="{% static 'js/mis_comunicaciones_results.js' %}"></script>
     <script src="{% static 'js/mis_comunicaciones_filters_toggle.js' %}"></script>
+    <script>
+        (function () {
+            const page = document.querySelector(".mis-comunicaciones-page");
+            const layout = page ? page.querySelector(".main-layout") : null;
+            const toggleBtn = page ? page.querySelector(".filters-toggle") : null;
+            const panel = document.getElementById("filtersPanel");
+            const form = document.getElementById("mis-comunicaciones-filtros-form");
+            const backdrop = page ? page.querySelector(".filters-backdrop") : null;
+            if (!page || !layout || !panel) return;
+
+            function closeFilters() {
+                layout.classList.remove("filters-open");
+                layout.classList.add("filters-collapsed");
+                if (toggleBtn) toggleBtn.setAttribute("aria-expanded", "false");
+                if (backdrop) backdrop.classList.remove("is-visible");
+                document.body.classList.remove("filters-drawer-open");
+                try {
+                    window.localStorage.setItem("misComunicacionesFiltersCollapsed", "1");
+                } catch (error) {
+                    // Ignore storage failures.
+                }
+            }
+
+            page.addEventListener("click", function (event) {
+                if (!event.target.closest("[data-filters-close]")) return;
+                event.preventDefault();
+                closeFilters();
+            });
+
+            if (form) {
+                form.addEventListener("submit", function () {
+                    closeFilters();
+                });
+            }
+        })();
+    </script>
     <script src="{% static 'js/boletin_confirmacion_lectura.js' %}"></script>
     <script src="{% static 'js/registrar_incidencia_combobox.js' %}"></script>
     <script src="{% static 'js/user_menu.js' %}"></script>

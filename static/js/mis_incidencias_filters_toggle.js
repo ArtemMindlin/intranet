@@ -3,10 +3,58 @@
     const toggleBtn = document.querySelector(".mis-incidencias-page .filters-toggle");
     const panel = document.getElementById("filtersPanel");
     const backdrop = document.querySelector(".mis-incidencias-page .filters-backdrop");
+    const form = document.getElementById("mis-incidencias-filtros-form");
+    const closeButtons = Array.from(panel ? panel.querySelectorAll("[data-filters-close]") : []);
     if (!layout || !toggleBtn || !panel) return;
+    const countNode = toggleBtn.querySelector("[data-filters-count]");
 
     const STORAGE_KEY = "misIncidenciasFiltersCollapsed";
-    const mobileQuery = window.matchMedia("(max-width: 1024px)");
+    const mobileQuery = window.matchMedia("(max-width: 600px)");
+    const sheetQuery = window.matchMedia("(max-width: 600px)");
+    const shortLandscapeDialogQuery = window.matchMedia(
+        "(max-width: 600px) and (orientation: landscape) and (max-height: 500px)"
+    );
+
+    function isFocusTrapMode() {
+        return sheetQuery.matches || shortLandscapeDialogQuery.matches;
+    }
+
+    function getFocusableElements() {
+        return Array.from(
+            panel.querySelectorAll(
+                "a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])"
+            )
+        ).filter((el) => !el.hasAttribute("hidden") && el.offsetParent !== null);
+    }
+
+    function readFilterValue(name) {
+        if (!form) return "";
+        const field = form.elements.namedItem(name);
+        if (!field) return "";
+        return String(field.value || "").trim();
+    }
+
+    function getActiveFilterCount() {
+        if (!form) {
+            return document.querySelectorAll(".active-filters .filter-chip").length;
+        }
+        let count = 0;
+        const desde = readFilterValue("desde");
+        const hasta = readFilterValue("hasta");
+        if (desde || hasta) count += 1;
+        if (readFilterValue("matricula")) count += 1;
+        if (readFilterValue("estado")) count += 1;
+        return count;
+    }
+
+    function syncToggleCount() {
+        const count = getActiveFilterCount();
+        if (countNode) {
+            countNode.textContent = String(count);
+            countNode.hidden = count === 0;
+        }
+        toggleBtn.setAttribute("aria-label", count > 0 ? `Filtros (${count})` : "Filtros");
+    }
 
     function getStoredCollapsed() {
         try {
@@ -59,6 +107,7 @@
         }
 
         if (persist) saveCollapsed(collapsed);
+        syncToggleCount();
     }
 
     function isCollapsed() {
@@ -68,7 +117,7 @@
 
     function initializeState() {
         const stored = getStoredCollapsed();
-        const initialCollapsed = stored !== null ? stored : mobileQuery.matches;
+        const initialCollapsed = mobileQuery.matches ? true : (stored !== null ? stored : false);
         setCollapsed(initialCollapsed, { persist: false });
     }
 
@@ -80,6 +129,13 @@
         });
     });
 
+    closeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            setCollapsed(true, { persist: true });
+            toggleBtn.focus();
+        });
+    });
+
     if (backdrop) {
         backdrop.addEventListener("click", () => {
             setCollapsed(true, { persist: true });
@@ -87,16 +143,34 @@
     }
 
     document.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape") return;
-        if (!mobileQuery.matches) return;
+        if (event.key === "Escape") {
+            if (!mobileQuery.matches) return;
+            if (!layout.classList.contains("filters-open")) return;
+            setCollapsed(true, { persist: true });
+            toggleBtn.focus();
+            return;
+        }
+
+        if (event.key !== "Tab") return;
+        if (!isFocusTrapMode()) return;
         if (!layout.classList.contains("filters-open")) return;
-        setCollapsed(true, { persist: true });
-        toggleBtn.focus();
+        const focusable = getFocusableElements();
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        if (event.shiftKey && active === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && active === last) {
+            event.preventDefault();
+            first.focus();
+        }
     });
 
     const handleViewportChange = () => {
         const stored = getStoredCollapsed();
-        const collapsed = stored !== null ? stored : mobileQuery.matches;
+        const collapsed = mobileQuery.matches ? true : (stored !== null ? stored : false);
         setCollapsed(collapsed, { persist: false });
     };
 
@@ -106,5 +180,14 @@
         mobileQuery.addListener(handleViewportChange);
     }
 
+    if (form) {
+        form.addEventListener("input", syncToggleCount);
+        form.addEventListener("change", syncToggleCount);
+        form.addEventListener("submit", () => {
+            setCollapsed(true, { persist: true });
+        });
+    }
+
     initializeState();
+    syncToggleCount();
 })();

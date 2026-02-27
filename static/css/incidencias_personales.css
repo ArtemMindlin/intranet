@@ -973,3 +973,29 @@
         min-width: 0;
     }
 }
+
+@media (max-width: 900px) and (orientation: landscape) {
+    .mis-incidencias-page .content-topbar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+    }
+
+    .mis-incidencias-page .content-topbar__actions {
+        margin-left: auto;
+        width: auto;
+        flex: 0 0 auto;
+    }
+
+    .mis-incidencias-page .content-topbar__actions .acciones-comisiones {
+        width: auto;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+    }
+
+    .mis-incidencias-page .content-topbar__actions .acciones-comisiones .btn {
+        width: auto;
+        white-space: nowrap;
+    }
+}

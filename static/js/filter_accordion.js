@@ -1,6 +1,13 @@
 (function () {
     const accordions = Array.from(document.querySelectorAll(".filters .filter-accordion"));
     if (!accordions.length) return;
+    const mobileSheetQuery = window.matchMedia("(max-width: 600px)");
+    const shortLandscapeDialogQuery = window.matchMedia(
+        "(max-width: 600px) and (orientation: landscape) and (max-height: 500px)"
+    );
+
+    const isSingleOpenMode = () =>
+        mobileSheetQuery.matches || shortLandscapeDialogQuery.matches;
 
     const setOpen = (accordion, open, immediate) => {
         const header = accordion.querySelector(".filter-accordion__header");
@@ -46,7 +53,15 @@
 
         header.addEventListener("click", () => {
             const isOpen = accordion.classList.contains("is-open");
-            setOpen(accordion, !isOpen, false);
+            const willOpen = !isOpen;
+            if (willOpen && isSingleOpenMode()) {
+                accordions.forEach((otherAccordion) => {
+                    if (otherAccordion === accordion) return;
+                    if (!otherAccordion.classList.contains("is-open")) return;
+                    setOpen(otherAccordion, false, false);
+                });
+            }
+            setOpen(accordion, willOpen, false);
         });
 
         content.addEventListener("transitionend", (event) => {

@@ -15,6 +15,7 @@ urlpatterns = [
     path("", views.comisiones_gerencia, name="comisiones_gerencia"),
     # Vista activa del comercial.
     path("mis_ventas/", views.mis_ventas, name="mis_ventas"),
+    path("mis_ventas/exportar/", views.exportar_mis_ventas, name="exportar_mis_ventas"),
     # Vistas de incidencias del comercial.
     path("mis_incidencias/", views.mis_incidencias, name="mis_incidencias"),
     path("boletin/", views.mis_comunicaciones, name="boletin"),

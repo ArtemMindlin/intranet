@@ -132,6 +132,7 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 AUTHENTICATION_BACKENDS = [
     "comisiones.auth_backends.DNIAutenticacionBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 # Correo para notificaciones de incidencias.

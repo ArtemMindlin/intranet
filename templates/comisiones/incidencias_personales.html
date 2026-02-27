@@ -82,6 +82,7 @@
             <button class="filters-toggle" type="button" aria-controls="filtersPanel" aria-expanded="true">
                 <span class="filters-toggle__icon" aria-hidden="true">&#9776;</span>
                 <span class="filters-toggle__label">Filtros</span>
+                <span class="filters-toggle__count" data-filters-count {% if not active_filters %}hidden{% endif %}>{{ active_filters|length }}</span>
             </button>
 
             <div class="content-topbar__actions">
@@ -100,6 +101,17 @@
 
         <section class="content main-layout">
             <aside id="filtersPanel" class="filters-panel-shell" tabindex="-1">
+                <div class="filters-sheet-header">
+                    <h3 class="filters-sheet-title">Filtros</h3>
+                    <div class="filters-sheet-header-actions">
+                        {% if active_filters %}
+                        <button type="button" class="clear-filters-btn filters-sheet-clear" data-clear-all="true" aria-label="Limpiar filtros">
+                            Limpiar
+                        </button>
+                        {% endif %}
+                        <button type="button" class="filters-sheet-close" data-filters-close aria-label="Cerrar filtros">&times;</button>
+                    </div>
+                </div>
                 <form method="get" class="filters filters-panel" id="mis-incidencias-filtros-form">
                     <input type="hidden" name="sort" value="{{ sort_by }}">
                     <input type="hidden" name="dir" value="{{ sort_dir }}">
@@ -164,7 +176,8 @@
                     </div>
 
                     <div class="field field-submit">
-                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtro</button>
+                        <button type="button" class="btn btn-secondary filters-sheet-cancel" data-filters-close>Cerrar</button>
+                        <button type="submit" class="btn btn-primary aplicar-filtro" disabled>Aplicar filtros</button>
                     </div>
                 </form>
             </aside>

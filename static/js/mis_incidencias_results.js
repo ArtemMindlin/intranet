@@ -7,7 +7,7 @@
     const rows = Array.from(document.querySelectorAll("[data-result-row]"));
     const visibleCount = document.getElementById("results-visible-count");
     const loadMoreBtn = document.getElementById("load-more-incidencias");
-    const clearAllBtn = document.querySelector("[data-clear-all='true']");
+    const clearAllButtons = Array.from(document.querySelectorAll("[data-clear-all='true']"));
     const chipButtons = Array.from(document.querySelectorAll(".filter-chip"));
 
     function readFilterValue(name) {
@@ -64,11 +64,11 @@
         });
     });
 
-    if (clearAllBtn) {
-        clearAllBtn.addEventListener("click", () => {
+    clearAllButtons.forEach((clearBtn) => {
+        clearBtn.addEventListener("click", () => {
             window.location.assign(window.location.pathname);
         });
-    }
+    });
 
     if (!rows.length || !loadMoreBtn) return;
 

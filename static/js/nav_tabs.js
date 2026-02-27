@@ -67,9 +67,30 @@
         };
 
         if (moreToggle && menu) {
+            let closeTimer = null;
+            const openWithDelayProtection = () => {
+                if (closeTimer) {
+                    window.clearTimeout(closeTimer);
+                    closeTimer = null;
+                }
+                setMenuOpen(true);
+            };
+            const closeWithDelayProtection = () => {
+                if (closeTimer) {
+                    window.clearTimeout(closeTimer);
+                }
+                closeTimer = window.setTimeout(() => {
+                    setMenuOpen(false);
+                    closeTimer = null;
+                }, 180);
+            };
+
             moreToggle.addEventListener("click", () => {
                 setMenuOpen(!moreContainer.classList.contains("open"));
             });
+
+            moreContainer.addEventListener("mouseenter", openWithDelayProtection);
+            moreContainer.addEventListener("mouseleave", closeWithDelayProtection);
 
             moreToggle.addEventListener("keydown", (event) => {
                 if (event.key === "ArrowDown") {
@@ -99,6 +120,10 @@
 
             document.addEventListener("click", (event) => {
                 if (!moreContainer.contains(event.target)) {
+                    if (closeTimer) {
+                        window.clearTimeout(closeTimer);
+                        closeTimer = null;
+                    }
                     setMenuOpen(false);
                 }
             });
